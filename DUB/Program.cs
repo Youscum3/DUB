@@ -21,7 +21,6 @@ if (!string.IsNullOrEmpty(token))
 {
     var botClient = new TelegramBotClient(token);
 
-    // Сброс вебхука
     await botClient.DeleteWebhookAsync();
 
     botClient.StartReceiving(
@@ -34,38 +33,59 @@ if (!string.IsNullOrEmpty(token))
 
                 if (text.StartsWith("/start"))
                 {
-                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы увидеть цены.");
+                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы увидеть категории цветов.");
                 }
                 else if (text.StartsWith("/price") || text.StartsWith("/цена"))
                 {
-                    // Создаём кнопки с вариантами букетов
+                    // Первый уровень меню: категории цветов
                     var keyboard = new InlineKeyboardMarkup(new[]
                     {
-                        new []
-                        {
-                            InlineKeyboardButton.WithCallbackData("Букет из 31 розы", "price_31"),
-                            InlineKeyboardButton.WithCallbackData("Букет из 51 розы", "price_51")
-                        }
+                        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
                     });
 
-                    await bot.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
+                    await bot.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
                 }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
             {
                 var chatId = update.CallbackQuery.Message.Chat.Id;
 
-                // Проверяем, какую кнопку нажали
-                if (callbackData == "price_31")
+                // Второй уровень меню: показываем конкретные букеты и цены
+                if (callbackData == "category_tulips")
                 {
-                    await botClient.SendTextMessageAsync(chatId, "Букет из 31 розы — 1999₽");
+                    var keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new [] { InlineKeyboardButton.WithCallbackData("Букет 15 тюльпанов — 999₽", "price_tulips_15") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Букет 31 тюльпан — 1999₽", "price_tulips_31") }
+                    });
+                    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
                 }
-                else if (callbackData == "price_51")
+                else if (callbackData == "category_roses")
                 {
-                    await botClient.SendTextMessageAsync(chatId, "Букет из 51 розы — 2999₽");
+                    var keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new [] { InlineKeyboardButton.WithCallbackData("Букет 31 роза — 1999₽", "price_roses_31") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Букет 51 роза — 2999₽", "price_roses_51") }
+                    });
+                    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
+                }
+                else if (callbackData == "category_dahlias")
+                {
+                    var keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new [] { InlineKeyboardButton.WithCallbackData("Букет 10 георгин — 899₽", "price_dahlias_10") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Букет 20 георгин — 1599₽", "price_dahlias_20") }
+                    });
+                    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
+                }
+                // Третий уровень: показываем цену после выбора конкретного букета
+                else if (callbackData.StartsWith("price_"))
+                {
+                    await botClient.SendTextMessageAsync(chatId, $"Вы выбрали: {update.CallbackQuery.Data.Replace("price_", "").Replace("_", " ")}");
                 }
 
-                // Можно закрыть сообщение с кнопками (необязательно)
                 await botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
             }
         },
