@@ -84,10 +84,6 @@ if (!string.IsNullOrEmpty(token))
                     });
                     await bot.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: keyboard);
                 }
-                else if (messageText.ToLower() == "контакты" || messageText.ToLower() == "/contacts")
-                {
-                    await bot.SendTextMessageAsync(chatId, "Наши контакты:\n\nInstagram: @bouquet_dubossary\nTelegram: @youscum1");
-                }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
             {
@@ -157,6 +153,17 @@ if (!string.IsNullOrEmpty(token))
                         await botClient.SendTextMessageAsync(chatId, "Личная встреча");
                         break;
 
+                    // Контакты
+                    case "contacts":
+                        var contactsKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+                            new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") },
+                            new [] { InlineKeyboardButton.WithUrl("Telegram: @youscum1", "https://t.me/youscum1") }
+                        });
+
+                        await botClient.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: contactsKeyboard);
+                        break;
+
                     // Доставка по выбранному способу
                     default:
                         if (callbackData.EndsWith("_bus"))
@@ -167,8 +174,6 @@ if (!string.IsNullOrEmpty(token))
                             await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку через Nova Poshta.");
                         else if (callbackData == "moldova_bus")
                             await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
-                        else if (callbackData == "contacts")
-                            await botClient.SendTextMessageAsync(chatId, "Наши контакты:\n\nInstagram: bouquet_dubossary\nTelegram: @youscum1");
                         break;
                 }
 
