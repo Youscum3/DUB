@@ -11,7 +11,6 @@ app.MapControllers();
 var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
 // Словарь для хранения состояния пользователя
-// Значение: "roses", "tulips", "dahlias" — чтобы бот знал, что считать
 var userState = new Dictionary<long, string>();
 
 if (!string.IsNullOrEmpty(token))
@@ -26,7 +25,7 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = message.Chat.Id;
 
-                // Проверяем, ждём ли мы от пользователя количество цветов
+                // Если ждём количество от пользователя
                 if (userState.ContainsKey(chatId))
                 {
                     if (int.TryParse(messageText, out int count))
@@ -44,7 +43,7 @@ if (!string.IsNullOrEmpty(token))
                         decimal total = count * pricePerUnit;
                         int roundedTotal = (int)Math.Round(total, 0, MidpointRounding.AwayFromZero);
 
-                        await bot.SendTextMessageAsync(chatId, $"Цена за {count} {flowerName}: {roundedTotal}₽");
+                        await bot.SendTextMessageAsync(chatId, $"Цена: {roundedTotal}₽");
                         userState.Remove(chatId); // убираем состояние
                     }
                     else
@@ -54,9 +53,10 @@ if (!string.IsNullOrEmpty(token))
                     return;
                 }
 
+                // Команды /start и /price
                 if (messageText.ToLower().StartsWith("/start"))
                 {
-                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы увидеть категории цветов.");
+                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы выбрать категорию цветов.");
                 }
                 else if (messageText.ToLower().StartsWith("/price") || messageText.ToLower().StartsWith("/цена"))
                 {
@@ -73,7 +73,7 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = update.CallbackQuery.Message.Chat.Id;
 
-                // Устанавливаем состояние в зависимости от выбранной категории
+                // Категории цветов — сразу запрашиваем количество, без цены
                 switch (callbackData)
                 {
                     case "category_roses":
