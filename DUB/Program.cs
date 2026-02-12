@@ -31,7 +31,7 @@ if (!string.IsNullOrEmpty(token))
             var chatId = message.Chat.Id;
 
             if (messageText == "/start")
-                await bot.SendTextMessageAsync(chatId, "Привет 👋\n успешно запущен на Railway!");
+                await bot.SendTextMessageAsync(chatId, "Максим лох");
             else
                 await bot.SendTextMessageAsync(chatId, $"Ты написал: {messageText}");
         },
