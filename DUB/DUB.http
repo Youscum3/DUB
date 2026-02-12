@@ -1,0 +1,6 @@
+@DUB_HostAddress = http://localhost:5245
+
+GET {{DUB_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
