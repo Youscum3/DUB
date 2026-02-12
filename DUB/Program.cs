@@ -11,6 +11,7 @@ app.MapControllers();
 var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
 // Словарь для хранения состояния пользователя
+// Значение: "roses", "tulips", "dahlias" — чтобы бот знал, что считать
 var userState = new Dictionary<long, string>();
 
 if (!string.IsNullOrEmpty(token))
@@ -25,18 +26,25 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = message.Chat.Id;
 
-                // Проверяем, ждём ли мы от пользователя число для роз
-                if (userState.ContainsKey(chatId) && userState[chatId] == "waiting_roses")
+                // Проверяем, ждём ли мы от пользователя количество цветов
+                if (userState.ContainsKey(chatId))
                 {
                     if (int.TryParse(messageText, out int count))
                     {
-                        decimal pricePerRose = 8.6m;
-                        decimal total = count * pricePerRose;
+                        decimal pricePerUnit = 0;
+                        string flowerName = userState[chatId];
 
-                        // Округляем до ближайшего целого числа
+                        switch (flowerName)
+                        {
+                            case "roses": pricePerUnit = 8.6m; break;
+                            case "tulips": pricePerUnit = 6.6m; break;
+                            case "dahlias": pricePerUnit = 13m; break;
+                        }
+
+                        decimal total = count * pricePerUnit;
                         int roundedTotal = (int)Math.Round(total, 0, MidpointRounding.AwayFromZero);
 
-                        await bot.SendTextMessageAsync(chatId, $"Цена за {count} роз: {roundedTotal}₽");
+                        await bot.SendTextMessageAsync(chatId, $"Цена за {count} {flowerName}: {roundedTotal}₽");
                         userState.Remove(chatId); // убираем состояние
                     }
                     else
@@ -65,10 +73,23 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = update.CallbackQuery.Message.Chat.Id;
 
-                if (callbackData == "category_roses")
+                // Устанавливаем состояние в зависимости от выбранной категории
+                switch (callbackData)
                 {
-                    userState[chatId] = "waiting_roses";
-                    await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
+                    case "category_roses":
+                        userState[chatId] = "roses";
+                        await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
+                        break;
+
+                    case "category_tulips":
+                        userState[chatId] = "tulips";
+                        await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
+                        break;
+
+                    case "category_dahlias":
+                        userState[chatId] = "dahlias";
+                        await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
+                        break;
                 }
 
                 await botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
