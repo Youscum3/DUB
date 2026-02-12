@@ -110,7 +110,6 @@ if (!string.IsNullOrEmpty(token))
                             new [] { InlineKeyboardButton.WithCallbackData("Тирасполь", "pmr_tiraspol") },
                             new [] { InlineKeyboardButton.WithCallbackData("Бендеры", "pmr_bendery") },
                             new [] { InlineKeyboardButton.WithCallbackData("Слободея", "pmr_slobodeya") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Кнопки", "pmr_knopki") }
                         });
                         await botClient.SendTextMessageAsync(chatId, "Выберите город:", replyMarkup: pmrCities);
                         break;
