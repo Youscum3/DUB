@@ -168,7 +168,7 @@ if (!string.IsNullOrEmpty(token))
                         else if (callbackData == "moldova_bus")
                             await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
                         else if (callbackData == "contacts")
-                            await botClient.SendTextMessageAsync(chatId, "Наши контакты:\n\nInstagram: @bouquet_dubossary\nTelegram: @youscum1");
+                            await botClient.SendTextMessageAsync(chatId, "Наши контакты:\n\nInstagram: bouquet_dubossary\nTelegram: @youscum1");
                         break;
                 }
 
