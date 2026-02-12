@@ -32,7 +32,11 @@ if (!string.IsNullOrEmpty(token))
                     {
                         decimal pricePerRose = 8.6m;
                         decimal total = count * pricePerRose;
-                        await bot.SendTextMessageAsync(chatId, $"Цена за {count} роз: {total}₽");
+
+                        // Округляем до ближайшего целого числа
+                        int roundedTotal = (int)Math.Round(total, 0, MidpointRounding.AwayFromZero);
+
+                        await bot.SendTextMessageAsync(chatId, $"Цена за {count} роз: {roundedTotal}₽");
                         userState.Remove(chatId); // убираем состояние
                     }
                     else
@@ -42,7 +46,6 @@ if (!string.IsNullOrEmpty(token))
                     return;
                 }
 
-                // Остальные команды
                 if (messageText.ToLower().StartsWith("/start"))
                 {
                     await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы увидеть категории цветов.");
@@ -64,12 +67,10 @@ if (!string.IsNullOrEmpty(token))
 
                 if (callbackData == "category_roses")
                 {
-                    // Просто просим ввести количество
                     userState[chatId] = "waiting_roses";
                     await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
                 }
 
-                // Можно добавить состояния для тюльпанов, георгин аналогично
                 await botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
             }
         },
