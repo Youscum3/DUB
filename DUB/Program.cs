@@ -56,7 +56,13 @@ if (!string.IsNullOrEmpty(token))
                 // /start
                 if (messageText.ToLower().StartsWith("/start"))
                 {
-                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс' для цветов или 'Delivery' для доставки.");
+                    var mainKeyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new [] { InlineKeyboardButton.WithCallbackData("Прайс", "/price") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Delivery", "delivery") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Контакты", "contacts") }
+                    });
+                    await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
                 }
                 else if (messageText.ToLower().StartsWith("/price"))
                 {
@@ -77,6 +83,10 @@ if (!string.IsNullOrEmpty(token))
                         new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
                     });
                     await bot.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: keyboard);
+                }
+                else if (messageText.ToLower() == "контакты" || messageText.ToLower() == "/contacts")
+                {
+                    await bot.SendTextMessageAsync(chatId, "Наши контакты:\n\nInstagram: @bouquet_dubossary\nTelegram: @youscum1");
                 }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
@@ -157,6 +167,8 @@ if (!string.IsNullOrEmpty(token))
                             await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку через Nova Poshta.");
                         else if (callbackData == "moldova_bus")
                             await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
+                        else if (callbackData == "contacts")
+                            await botClient.SendTextMessageAsync(chatId, "Наши контакты:\n\nInstagram: @bouquet_dubossary\nTelegram: @youscum1");
                         break;
                 }
 
