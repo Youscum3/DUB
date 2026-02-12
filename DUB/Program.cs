@@ -10,7 +10,7 @@ app.MapControllers();
 
 var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
-// Словарь для хранения состояния пользователя (для цветов)
+// Словарь для состояния цветов
 var userState = new Dictionary<long, string>();
 
 if (!string.IsNullOrEmpty(token))
@@ -25,7 +25,7 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = message.Chat.Id;
 
-                // Если ждём количество цветов
+                // Цветы
                 if (userState.ContainsKey(chatId))
                 {
                     if (int.TryParse(messageText, out int count))
@@ -53,12 +53,12 @@ if (!string.IsNullOrEmpty(token))
                     return;
                 }
 
-                // Команды /start и /price
+                // /start
                 if (messageText.ToLower().StartsWith("/start"))
                 {
-                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы выбрать категорию цветов, или 'Delivery' для доставки.");
+                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс' для цветов или 'Delivery' для доставки.");
                 }
-                else if (messageText.ToLower().StartsWith("/price") || messageText.ToLower().StartsWith("/цена"))
+                else if (messageText.ToLower().StartsWith("/price"))
                 {
                     var keyboard = new InlineKeyboardMarkup(new[]
                     {
@@ -68,9 +68,8 @@ if (!string.IsNullOrEmpty(token))
                     });
                     await bot.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
                 }
-                else if (messageText.ToLower().StartsWith("/delivery"))
+                else if (messageText.ToLower().StartsWith("delivery"))
                 {
-                    // Первый уровень доставки
                     var keyboard = new InlineKeyboardMarkup(new[]
                     {
                         new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
@@ -84,9 +83,9 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = update.CallbackQuery.Message.Chat.Id;
 
-                // Цветы
                 switch (callbackData)
                 {
+                    // Цветы
                     case "category_roses":
                         userState[chatId] = "roses";
                         await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
@@ -100,25 +99,23 @@ if (!string.IsNullOrEmpty(token))
                         await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
                         break;
 
-                    // Доставка
+                    // Доставка — первый уровень
                     case "delivery_pmr":
-                        // Кнопки городов ПМР
-                        var citiesKeyboard = new InlineKeyboardMarkup(new[]
+                        var pmrCities = new InlineKeyboardMarkup(new[]
                         {
-                            new [] { InlineKeyboardButton.WithCallbackData("Кнопки", "pmr_knopki") },
                             new [] { InlineKeyboardButton.WithCallbackData("Каменка", "pmr_kamenka") },
                             new [] { InlineKeyboardButton.WithCallbackData("Рыбница", "pmr_rybnica") },
                             new [] { InlineKeyboardButton.WithCallbackData("Дубоссары", "pmr_dubossary") },
                             new [] { InlineKeyboardButton.WithCallbackData("Григориополь", "pmr_grigoriopol") },
                             new [] { InlineKeyboardButton.WithCallbackData("Тирасполь", "pmr_tiraspol") },
                             new [] { InlineKeyboardButton.WithCallbackData("Бендеры", "pmr_bendery") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Слободея", "pmr_slobodeya") }
+                            new [] { InlineKeyboardButton.WithCallbackData("Слободея", "pmr_slobodeya") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Кнопки", "pmr_knopki") }
                         });
-                        await botClient.SendTextMessageAsync(chatId, "Выберите город:", replyMarkup: citiesKeyboard);
+                        await botClient.SendTextMessageAsync(chatId, "Выберите город:", replyMarkup: pmrCities);
                         break;
 
                     case "delivery_moldova":
-                        // Кнопки способов доставки
                         var moldovaKeyboard = new InlineKeyboardMarkup(new[]
                         {
                             new [] { InlineKeyboardButton.WithCallbackData("Nova Poshta", "moldova_nova") },
@@ -131,24 +128,36 @@ if (!string.IsNullOrEmpty(token))
                         await botClient.SendTextMessageAsync(chatId, "К сожалению, доставка только по ПМР и Молдове.");
                         break;
 
-                    // Ответы на выбор городов ПМР
-                    case "pmr_knopki":
+                    // Города ПМР — два типа
                     case "pmr_kamenka":
                     case "pmr_rybnica":
-                    case "pmr_dubossary":
                     case "pmr_grigoriopol":
-                    case "pmr_tiraspol":
                     case "pmr_bendery":
                     case "pmr_slobodeya":
-                        await botClient.SendTextMessageAsync(chatId, $"Вы выбрали город: {callbackData.Replace("pmr_", "").Replace("_", " ")}");
+                    case "pmr_knopki":
+                        var pmrDeliveryKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+                            new [] { InlineKeyboardButton.WithCallbackData("Маршрутка", $"{callbackData}_bus") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Почта", $"{callbackData}_mail") }
+                        });
+                        await botClient.SendTextMessageAsync(chatId, "Выберите способ доставки:", replyMarkup: pmrDeliveryKeyboard);
                         break;
 
-                    // Ответы на выбор способа доставки в Молдове
-                    case "moldova_nova":
-                        await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку через Nova Poshta.");
+                    case "pmr_dubossary":
+                    case "pmr_tiraspol":
+                        await botClient.SendTextMessageAsync(chatId, "Личная встреча");
                         break;
-                    case "moldova_bus":
-                        await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
+
+                    // Доставка по выбранному способу
+                    default:
+                        if (callbackData.EndsWith("_bus"))
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
+                        else if (callbackData.EndsWith("_mail"))
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по почте.");
+                        else if (callbackData == "moldova_nova")
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку через Nova Poshta.");
+                        else if (callbackData == "moldova_bus")
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
                         break;
                 }
 
