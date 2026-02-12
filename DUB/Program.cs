@@ -2,25 +2,20 @@
 using Telegram.Bot.Types.ReplyMarkups;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Добавляем поддержку контроллеров
 builder.Services.AddControllers();
-
 var app = builder.Build();
-
-// Настройка порта для Railway
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://*:{port}");
-
 app.MapControllers();
 
-// Читаем токен
 var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
+
+// Словарь для хранения состояния пользователя
+var userState = new Dictionary<long, string>();
 
 if (!string.IsNullOrEmpty(token))
 {
     var botClient = new TelegramBotClient(token);
-
     await botClient.DeleteWebhookAsync();
 
     botClient.StartReceiving(
@@ -29,22 +24,37 @@ if (!string.IsNullOrEmpty(token))
             if (update.Message is { Text: { } messageText } message)
             {
                 var chatId = message.Chat.Id;
-                var text = messageText.ToLower();
 
-                if (text.StartsWith("/start"))
+                // Проверяем, ждём ли мы от пользователя число для роз
+                if (userState.ContainsKey(chatId) && userState[chatId] == "waiting_roses")
+                {
+                    if (int.TryParse(messageText, out int count))
+                    {
+                        decimal pricePerRose = 8.6m;
+                        decimal total = count * pricePerRose;
+                        await bot.SendTextMessageAsync(chatId, $"Цена за {count} роз: {total}₽");
+                        userState.Remove(chatId); // убираем состояние
+                    }
+                    else
+                    {
+                        await bot.SendTextMessageAsync(chatId, "Пожалуйста, введите число.");
+                    }
+                    return;
+                }
+
+                // Остальные команды
+                if (messageText.ToLower().StartsWith("/start"))
                 {
                     await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы увидеть категории цветов.");
                 }
-                else if (text.StartsWith("/price") || text.StartsWith("/цена"))
+                else if (messageText.ToLower().StartsWith("/price") || messageText.ToLower().StartsWith("/цена"))
                 {
-                    // Первый уровень меню: категории цветов
                     var keyboard = new InlineKeyboardMarkup(new[]
                     {
-                        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
                         new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
                         new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
                     });
-
                     await bot.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
                 }
             }
@@ -52,40 +62,14 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = update.CallbackQuery.Message.Chat.Id;
 
-                // Второй уровень меню: показываем конкретные букеты и цены
-                if (callbackData == "category_tulips")
+                if (callbackData == "category_roses")
                 {
-                    var keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new [] { InlineKeyboardButton.WithCallbackData("Букет 15 тюльпанов — 999₽", "price_tulips_15") },
-                        new [] { InlineKeyboardButton.WithCallbackData("Букет 31 тюльпан — 1999₽", "price_tulips_31") }
-                    });
-                    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
-                }
-                else if (callbackData == "category_roses")
-                {
-                    var keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new [] { InlineKeyboardButton.WithCallbackData("Букет 31 роза — 1999₽", "price_roses_31") },
-                        new [] { InlineKeyboardButton.WithCallbackData("Букет 51 роза — 2999₽", "price_roses_51") }
-                    });
-                    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
-                }
-                else if (callbackData == "category_dahlias")
-                {
-                    var keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new [] { InlineKeyboardButton.WithCallbackData("Букет 10 георгин — 899₽", "price_dahlias_10") },
-                        new [] { InlineKeyboardButton.WithCallbackData("Букет 20 георгин — 1599₽", "price_dahlias_20") }
-                    });
-                    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
-                }
-                // Третий уровень: показываем цену после выбора конкретного букета
-                else if (callbackData.StartsWith("price_"))
-                {
-                    await botClient.SendTextMessageAsync(chatId, $"Вы выбрали: {update.CallbackQuery.Data.Replace("price_", "").Replace("_", " ")}");
+                    // Просто просим ввести количество
+                    userState[chatId] = "waiting_roses";
+                    await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
                 }
 
+                // Можно добавить состояния для тюльпанов, георгин аналогично
                 await botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
             }
         },
