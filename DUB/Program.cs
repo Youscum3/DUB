@@ -1,30 +1,17 @@
 ﻿using Telegram.Bot;
 
-var builder = WebApplication.CreateBuilder(args);
+TelegramBotClient? botClient = null; // объявляем вне if
 
-// Добавляем поддержку контроллеров (чтобы TelegramController заработал)
-builder.Services.AddControllers();
-
-var app = builder.Build();
-
-// Настройка порта для Railway
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-app.Urls.Add($"http://*:{port}");
-
-app.MapControllers();
-
-// Читаем токен
 var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
 if (!string.IsNullOrEmpty(token))
 {
-    var botClient = new TelegramBotClient(token);
+    botClient = new TelegramBotClient(token);
 
-    // СБРОС ВЕБХУКА: это заставит Telegram перестать отправлять сообщения старым ботам
-    // и позволит твоему коду самому забирать сообщения (режим Long Polling)
+    // СБРОС ВЕБХУКА
     await botClient.DeleteWebhookAsync();
 
-    // Запускаем простую проверку обновлений
+    // Запускаем обработку сообщений
     botClient.StartReceiving(
         async (bot, update, ct) => {
             if (update.Message is not { Text: { } messageText } message) return;
@@ -32,6 +19,11 @@ if (!string.IsNullOrEmpty(token))
 
             if (messageText == "/start")
                 await bot.SendTextMessageAsync(chatId, "Максим лох");
+            else if (messageText == "/price" || messageText == "/цена")
+            {
+                decimal price = 199.99m;
+                await bot.SendTextMessageAsync(chatId, $"Текущая цена: {price}₽");
+            }
             else
                 await bot.SendTextMessageAsync(chatId, $"Ты написал: {messageText}");
         },
@@ -40,5 +32,3 @@ if (!string.IsNullOrEmpty(token))
 
     Console.WriteLine("Бот успешно запущен!");
 }
-
-app.Run();
