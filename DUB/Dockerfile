@@ -6,7 +6,7 @@ COPY . .
 WORKDIR "/src/DUB"
 RUN dotnet publish "DUB.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "DUB.dll"]
