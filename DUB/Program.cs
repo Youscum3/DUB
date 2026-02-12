@@ -154,7 +154,7 @@ if (!string.IsNullOrEmpty(token))
                         break;
 
                     // Контакты
-                    case "contacts":
+                    case "/contacts":
                         var contactsKeyboard = new InlineKeyboardMarkup(new[]
                         {
                             new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") },
