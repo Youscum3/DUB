@@ -68,7 +68,7 @@ if (!string.IsNullOrEmpty(token))
                     });
                     await bot.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
                 }
-                else if (messageText.ToLower().StartsWith("delivery"))
+                else if (messageText.ToLower().StartsWith("/delivery"))
                 {
                     // Первый уровень доставки
                     var keyboard = new InlineKeyboardMarkup(new[]
