@@ -1,8 +1,9 @@
 ﻿using Telegram.Bot;
+using Telegram.Bot.Types.ReplyMarkups;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем поддержку контроллеров (чтобы TelegramController заработал)
+// Добавляем поддержку контроллеров
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -20,31 +21,52 @@ if (!string.IsNullOrEmpty(token))
 {
     var botClient = new TelegramBotClient(token);
 
-    // СБРОС ВЕБХУКА
+    // Сброс вебхука
     await botClient.DeleteWebhookAsync();
 
-    // Запускаем простую проверку обновлений
     botClient.StartReceiving(
-        async (bot, update, ct) => {
-            if (update.Message is not { Text: { } messageText } message) return;
-            var chatId = message.Chat.Id;
+        async (bot, update, ct) =>
+        {
+            if (update.Message is { Text: { } messageText } message)
+            {
+                var chatId = message.Chat.Id;
+                var text = messageText.ToLower();
 
-            // Приводим текст к нижнему регистру, чтобы команды работали независимо от регистра
-            var text = messageText.ToLower();
+                if (text.StartsWith("/start"))
+                {
+                    await bot.SendTextMessageAsync(chatId, "Привет! Нажми кнопку 'Прайс', чтобы увидеть цены.");
+                }
+                else if (text.StartsWith("/price") || text.StartsWith("/цена"))
+                {
+                    // Создаём кнопки с вариантами букетов
+                    var keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new []
+                        {
+                            InlineKeyboardButton.WithCallbackData("Букет из 31 розы", "price_31"),
+                            InlineKeyboardButton.WithCallbackData("Букет из 51 розы", "price_51")
+                        }
+                    });
 
-            if (text.StartsWith("/start"))
-            {
-                await bot.SendTextMessageAsync(chatId, "Максим лох");
+                    await bot.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
+                }
             }
-            else if (text.StartsWith("/price") || text.StartsWith("/цена"))
+            else if (update.CallbackQuery is { Data: { } callbackData })
             {
-                // Пример цены — можно менять на любую
-                decimal price = 199.99m;
-                await bot.SendTextMessageAsync(chatId, $"Текущая цена: {price}₽");
-            }
-            else
-            {
-                await bot.SendTextMessageAsync(chatId, $"Ты написал: {messageText}");
+                var chatId = update.CallbackQuery.Message.Chat.Id;
+
+                // Проверяем, какую кнопку нажали
+                if (callbackData == "price_31")
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Букет из 31 розы — 1999₽");
+                }
+                else if (callbackData == "price_51")
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Букет из 51 розы — 2999₽");
+                }
+
+                // Можно закрыть сообщение с кнопками (необязательно)
+                await botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
             }
         },
         async (bot, ex, ct) => Console.WriteLine("Ошибка: " + ex.Message)
