@@ -62,7 +62,7 @@ if (!string.IsNullOrEmpty(token))
                         new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
                         new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") }
                     });
-                    await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
+                    await bot.SendTextMessageAsync(chatId, "Здравствуйте, выберите действие:", replyMarkup: mainKeyboard);
                 }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
