@@ -18,6 +18,39 @@ if (!string.IsNullOrEmpty(token))
     var botClient = new TelegramBotClient(token);
     await botClient.DeleteWebhookAsync();
 
+    async Task ShowPriceMenu(long chatId)
+    {
+        var keyboardPrice = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
+            new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
+            new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
+        });
+        await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboardPrice);
+    }
+
+    async Task ShowDeliveryMenu(long chatId)
+    {
+        var keyboardDelivery = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
+            new [] { InlineKeyboardButton.WithCallbackData("Молдова", "delivery_moldova") },
+            new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
+        });
+        await botClient.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: keyboardDelivery);
+    }
+
+    async Task ShowContacts(long chatId)
+    {
+        var contactsKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") }
+        });
+        string telegramText = "Telegram: @youscum1";
+        await botClient.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: contactsKeyboard);
+        await botClient.SendTextMessageAsync(chatId, telegramText);
+    }
+
     botClient.StartReceiving(
         async (bot, update, ct) =>
         {
@@ -62,7 +95,20 @@ if (!string.IsNullOrEmpty(token))
                         new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
                         new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") }
                     });
-                    await bot.SendTextMessageAsync(chatId, "Здравствуйте, выберите действие:", replyMarkup: mainKeyboard);
+                    await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
+                }
+                // Текстовые команды
+                else if (messageText.ToLower().StartsWith("/price"))
+                {
+                    await ShowPriceMenu(chatId);
+                }
+                else if (messageText.ToLower().StartsWith("/delivery"))
+                {
+                    await ShowDeliveryMenu(chatId);
+                }
+                else if (messageText.ToLower().StartsWith("/contacts") || messageText.ToLower() == "контакты")
+                {
+                    await ShowContacts(chatId);
                 }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
@@ -73,33 +119,13 @@ if (!string.IsNullOrEmpty(token))
                 {
                     // Главные кнопки
                     case "start_price":
-                        var keyboardPrice = new InlineKeyboardMarkup(new[]
-                        {
-                            new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
-                        });
-                        await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboardPrice);
+                        await ShowPriceMenu(chatId);
                         break;
-
                     case "start_delivery":
-                        var keyboardDelivery = new InlineKeyboardMarkup(new[]
-                        {
-                            new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Молдова", "delivery_moldova") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
-                        });
-                        await botClient.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: keyboardDelivery);
+                        await ShowDeliveryMenu(chatId);
                         break;
-
                     case "start_contacts":
-                        var contactsKeyboard = new InlineKeyboardMarkup(new[]
-                        {
-                            new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") }
-                        });
-                        string telegramText = "Telegram: @youscum1";
-                        await botClient.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: contactsKeyboard);
-                        await botClient.SendTextMessageAsync(chatId, telegramText);
+                        await ShowContacts(chatId);
                         break;
 
                     // Цветы
