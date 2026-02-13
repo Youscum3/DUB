@@ -53,7 +53,7 @@ if (!string.IsNullOrEmpty(token))
                     return;
                 }
 
-                // /start
+                // /start — главное меню
                 if (messageText.ToLower().StartsWith("/start"))
                 {
                     var mainKeyboard = new InlineKeyboardMarkup(new[]
@@ -64,6 +64,7 @@ if (!string.IsNullOrEmpty(token))
                     });
                     await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
                 }
+                // Прайс
                 else if (messageText.ToLower().StartsWith("/price"))
                 {
                     var keyboard = new InlineKeyboardMarkup(new[]
@@ -74,6 +75,7 @@ if (!string.IsNullOrEmpty(token))
                     });
                     await bot.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
                 }
+                // Доставка
                 else if (messageText.ToLower().StartsWith("/delivery"))
                 {
                     var keyboard = new InlineKeyboardMarkup(new[]
@@ -83,6 +85,17 @@ if (!string.IsNullOrEmpty(token))
                         new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
                     });
                     await bot.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: keyboard);
+                }
+                // Контакты через текст
+                else if (messageText.ToLower() == "контакты" || messageText.ToLower() == "/contacts")
+                {
+                    var contactsKeyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") },
+                        new [] { InlineKeyboardButton.WithUrl("Telegram: @youscum1", "https://t.me/youscum1") }
+                    });
+
+                    await bot.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: contactsKeyboard);
                 }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
@@ -153,8 +166,8 @@ if (!string.IsNullOrEmpty(token))
                         await botClient.SendTextMessageAsync(chatId, "Личная встреча");
                         break;
 
-                    // Контакты
-                    case "/contacts":
+                    // Контакты через кнопку
+                    case "contacts":
                         var contactsKeyboard = new InlineKeyboardMarkup(new[]
                         {
                             new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") },
