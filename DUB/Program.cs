@@ -58,8 +58,8 @@ if (!string.IsNullOrEmpty(token))
                 {
                     var mainKeyboard = new InlineKeyboardMarkup(new[]
                     {
-                        new [] { InlineKeyboardButton.WithCallbackData("Прайс", "/price") },
-                        new [] { InlineKeyboardButton.WithCallbackData("Delivery", "delivery") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Цены", "/price") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Доставка", "delivery") },
                         new [] { InlineKeyboardButton.WithCallbackData("Контакты", "contacts") }
                     });
                     await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
