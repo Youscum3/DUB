@@ -91,11 +91,13 @@ if (!string.IsNullOrEmpty(token))
                 {
                     var contactsKeyboard = new InlineKeyboardMarkup(new[]
                     {
-                        new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") },
-                        new [] { InlineKeyboardButton.WithUrl("Telegram: @youscum1", "https://t.me/youscum1") }
+                        new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") }
                     });
 
+                    string telegramText = "Telegram: @youscum1";
+
                     await bot.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: contactsKeyboard);
+                    await bot.SendTextMessageAsync(chatId, telegramText);
                 }
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
@@ -170,11 +172,11 @@ if (!string.IsNullOrEmpty(token))
                     case "contacts":
                         var contactsKeyboard = new InlineKeyboardMarkup(new[]
                         {
-                            new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") },
-                            new [] { InlineKeyboardButton.WithUrl("Telegram: @youscum1", "https://t.me/youscum1") }
+                            new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary?igsh=ZDhzeHpzZmNiMWE5&utm_source=qr") }
                         });
-
+                        string telegramText = "Telegram: @youscum1";
                         await botClient.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: contactsKeyboard);
+                        await botClient.SendTextMessageAsync(chatId, telegramText);
                         break;
 
                     // Доставка по выбранному способу
