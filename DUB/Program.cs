@@ -18,6 +18,7 @@ if (!string.IsNullOrEmpty(token))
     var botClient = new TelegramBotClient(token);
     await botClient.DeleteWebhookAsync();
 
+    // --- Функции для главных меню ---
     async Task ShowPriceMenu(long chatId)
     {
         var keyboardPrice = new InlineKeyboardMarkup(new[]
@@ -51,6 +52,17 @@ if (!string.IsNullOrEmpty(token))
         await botClient.SendTextMessageAsync(chatId, telegramText);
     }
 
+    async Task ShowOrderMenu(long chatId)
+    {
+        var orderKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithCallbackData("Розы", "order_roses") },
+            new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "order_tulips") },
+            new [] { InlineKeyboardButton.WithCallbackData("Георгины", "order_dahlias") }
+        });
+        await botClient.SendTextMessageAsync(chatId, "Выберите букет для заказа:", replyMarkup: orderKeyboard);
+    }
+
     botClient.StartReceiving(
         async (bot, update, ct) =>
         {
@@ -58,7 +70,7 @@ if (!string.IsNullOrEmpty(token))
             {
                 var chatId = message.Chat.Id;
 
-                // Цветы
+                // Цветы — ввод количества
                 if (userState.ContainsKey(chatId))
                 {
                     if (int.TryParse(messageText, out int count))
@@ -93,23 +105,20 @@ if (!string.IsNullOrEmpty(token))
                     {
                         new [] { InlineKeyboardButton.WithCallbackData("Цены", "start_price") },
                         new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
-                        new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") }
+                        new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Сделать заказ", "start_order") }
                     });
                     await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
                 }
                 // Текстовые команды
                 else if (messageText.ToLower().StartsWith("/price"))
-                {
                     await ShowPriceMenu(chatId);
-                }
                 else if (messageText.ToLower().StartsWith("/delivery"))
-                {
                     await ShowDeliveryMenu(chatId);
-                }
                 else if (messageText.ToLower().StartsWith("/contacts") || messageText.ToLower() == "контакты")
-                {
                     await ShowContacts(chatId);
-                }
+                else if (messageText.ToLower().StartsWith("/order"))
+                    await ShowOrderMenu(chatId);
             }
             else if (update.CallbackQuery is { Data: { } callbackData })
             {
@@ -118,29 +127,20 @@ if (!string.IsNullOrEmpty(token))
                 switch (callbackData)
                 {
                     // Главные кнопки
-                    case "start_price":
-                        await ShowPriceMenu(chatId);
-                        break;
-                    case "start_delivery":
-                        await ShowDeliveryMenu(chatId);
-                        break;
-                    case "start_contacts":
-                        await ShowContacts(chatId);
-                        break;
+                    case "start_price": await ShowPriceMenu(chatId); break;
+                    case "start_delivery": await ShowDeliveryMenu(chatId); break;
+                    case "start_contacts": await ShowContacts(chatId); break;
+                    case "start_order": await ShowOrderMenu(chatId); break;
 
-                    // Цветы
-                    case "category_roses":
-                        userState[chatId] = "roses";
-                        await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
-                        break;
-                    case "category_tulips":
-                        userState[chatId] = "tulips";
-                        await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
-                        break;
-                    case "category_dahlias":
-                        userState[chatId] = "dahlias";
-                        await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно.");
-                        break;
+                    // Цветы — выбор для цены
+                    case "category_roses": userState[chatId] = "roses"; await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно."); break;
+                    case "category_tulips": userState[chatId] = "tulips"; await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно."); break;
+                    case "category_dahlias": userState[chatId] = "dahlias"; await botClient.SendTextMessageAsync(chatId, "Введите, сколько штук вам нужно."); break;
+
+                    // Сделать заказ — выбор букета
+                    case "order_roses": await botClient.SendTextMessageAsync(chatId, "Вы выбрали букет: Розы. Введите количество для заказа."); userState[chatId] = "roses"; break;
+                    case "order_tulips": await botClient.SendTextMessageAsync(chatId, "Вы выбрали букет: Тюльпаны. Введите количество для заказа."); userState[chatId] = "tulips"; break;
+                    case "order_dahlias": await botClient.SendTextMessageAsync(chatId, "Вы выбрали букет: Георгины. Введите количество для заказа."); userState[chatId] = "dahlias"; break;
 
                     // Доставка — ПМР
                     case "delivery_pmr":
