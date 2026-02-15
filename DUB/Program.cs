@@ -45,7 +45,7 @@ if (!string.IsNullOrEmpty(token))
 
                         await bot.SendTextMessageAsync(
                             chatId,
-                            $"Цена: {rounded}₽\n\nМожете ввести другое количество."
+                            $"Цена: {rounded}₽\n"
                         );
 
                         // ❌ НЕ удаляем состояние!
