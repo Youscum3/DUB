@@ -1,4 +1,5 @@
 ﻿using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,7 @@ app.MapControllers();
 
 var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
-// состояние пользователя
+// Словарь для хранения текущего шага пользователя
 var userState = new Dictionary<long, string>();
 
 if (!string.IsNullOrEmpty(token))
@@ -25,158 +26,71 @@ if (!string.IsNullOrEmpty(token))
             if (update.Message is { Text: { } messageText } message)
             {
                 var chatId = message.Chat.Id;
-                var text = messageText.ToLower();
+                var text = messageText.Trim(); // Убираем лишние пробелы
 
-                // ==============================
-                // 📌 ГЛАВНОЕ МЕНЮ
-                // ==============================
-
+                // 1. КОМАНДА /START
                 if (text == "/start")
                 {
-                    var menu = new ReplyKeyboardMarkup(new[]
+                    userState[chatId] = "choose_flower"; // Устанавливаем состояние ожидания выбора
+
+                    var flowers = new ReplyKeyboardMarkup(new[]
                     {
-                        new KeyboardButton[] { "💰 Прайс", "🚚 Доставка" },
-                        new KeyboardButton[] { "🛒 Сделать заказ", "📞 Контакты" }
+                        new KeyboardButton[] { "🌹 Розы", "🌷 Тюльпаны", "🌼 Георгины" }
                     })
-                    {
-                        ResizeKeyboard = true
-                    };
+                    { ResizeKeyboard = true, OneTimeKeyboard = true };
 
-                    await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: menu);
+                    await bot.SendTextMessageAsync(chatId, "Выберите букет из меню:", replyMarkup: flowers);
                     return;
                 }
 
-                // ==============================
-                // 📌 ПРАЙС
-                // ==============================
-
-                if (text == "💰 прайс" || text == "/price")
+                // 2. ОБРАБОТКА ВЫБОРА КАТЕГОРИИ
+                if (userState.TryGetValue(chatId, out var state) && state == "choose_flower")
                 {
-                    var priceKeyboard = new ReplyKeyboardMarkup(new[]
-                    {
-                        new KeyboardButton[] { "Розы", "Тюльпаны", "Георгины" }
-                    })
-                    {
-                        ResizeKeyboard = true
-                    };
-
-                    await bot.SendTextMessageAsync(chatId, "Выберите цветы:", replyMarkup: priceKeyboard);
-                    return;
-                }
-
-                if (text == "розы")
-                {
-                    userState[chatId] = "roses";
-                    await bot.SendTextMessageAsync(chatId, "Сколько роз?");
-                    return;
-                }
-
-                if (text == "тюльпаны")
-                {
-                    userState[chatId] = "tulips";
-                    await bot.SendTextMessageAsync(chatId, "Сколько тюльпанов?");
-                    return;
-                }
-
-                if (text == "георгины")
-                {
-                    userState[chatId] = "dahlias";
-                    await bot.SendTextMessageAsync(chatId, "Сколько георгинов?");
-                    return;
-                }
-
-                // ввод количества
-                if (userState.ContainsKey(chatId))
-                {
-                    if (int.TryParse(messageText, out int count))
-                    {
-                        decimal price = 0;
-
-                        switch (userState[chatId])
-                        {
-                            case "roses": price = 8.6m; break;
-                            case "tulips": price = 6.6m; break;
-                            case "dahlias": price = 13m; break;
-                        }
-
-                        int total = (int)Math.Round(count * price);
-                        await bot.SendTextMessageAsync(chatId, $"Цена: {total} ₽");
-                    }
+                    if (text.Contains("Розы")) userState[chatId] = "roses_count";
+                    else if (text.Contains("Тюльпаны")) userState[chatId] = "tulips_count";
+                    else if (text.Contains("Георгины")) userState[chatId] = "dahlias_count";
                     else
                     {
-                        await bot.SendTextMessageAsync(chatId, "Введите число.");
+                        await bot.SendTextMessageAsync(chatId, "Пожалуйста, выберите цветок, нажав на кнопку.");
+                        return;
                     }
+
+                    await bot.SendTextMessageAsync(chatId, $"Вы выбрали {text}. Введите количество штук (числом):",
+                        replyMarkup: new ReplyKeyboardRemove()); // Убираем кнопки
                     return;
                 }
 
-                // ==============================
-                // 📌 ДОСТАВКА
-                // ==============================
-
-                if (text == "🚚 доставка" || text == "/delivery")
+                // 3. ОБРАБОТКА ВВОДА КОЛИЧЕСТВА И РАСЧЕТ
+                if (userState.TryGetValue(chatId, out var currentState) && currentState.EndsWith("_count"))
                 {
-                    var deliveryKeyboard = new ReplyKeyboardMarkup(new[]
+                    if (!int.TryParse(text, out int count) || count <= 0)
                     {
-                        new KeyboardButton[] { "ПМР", "Молдова", "Другие страны" }
-                    })
+                        await bot.SendTextMessageAsync(chatId, "Ошибка! Введите целое число больше нуля.");
+                        return;
+                    }
+
+                    decimal pricePerOne = currentState switch
                     {
-                        ResizeKeyboard = true
+                        "roses_count" => 8.6m,
+                        "tulips_count" => 6.6m,
+                        "dahlias_count" => 13m,
+                        _ => 0
                     };
 
-                    await bot.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: deliveryKeyboard);
-                    return;
-                }
+                    decimal total = count * pricePerOne;
 
-                if (text == "пмр")
-                {
+                    // Очищаем состояние после расчета
+                    userState.Remove(chatId);
+
                     await bot.SendTextMessageAsync(chatId,
-                        "Города ПМР:\nКаменка, Рыбница, Дубоссары, Григориополь, Тирасполь, Бендеры, Слободзея");
-                    return;
-                }
-
-                if (text == "молдова")
-                {
-                    await bot.SendTextMessageAsync(chatId,
-                        "Доставка: Nova Poshta или маршрутка");
-                    return;
-                }
-
-                if (text == "другие страны")
-                {
-                    await bot.SendTextMessageAsync(chatId,
-                        "К сожалению, доставка только по ПМР и Молдове.");
-                    return;
-                }
-
-                // ==============================
-                // 📌 КОНТАКТЫ
-                // ==============================
-
-                if (text == "📞 контакты" || text == "/contacts")
-                {
-                    await bot.SendTextMessageAsync(chatId,
-                        "Наши контакты:\n\n" +
-                        "Instagram:\nhttps://www.instagram.com/bouquet_dubossary\n\n" +
-                        "Telegram: @youscum1");
-                    return;
-                }
-
-                // ==============================
-                // 📌 СДЕЛАТЬ ЗАКАЗ
-                // ==============================
-
-                if (text == "🛒 сделать заказ" || text == "/order")
-                {
-                    await bot.SendTextMessageAsync(chatId,
-                        "Напишите, какой букет хотите заказать 🌸");
-                    return;
+                        $"✅ Расчет готов!\nКоличество: {count} шт.\nИтоговая цена: {total:F2} ₽\n\nДля нового заказа введите /start");
                 }
             }
         },
         async (bot, ex, ct) => Console.WriteLine("Ошибка: " + ex.Message)
     );
 
-    Console.WriteLine("Бот запущен!");
+    Console.WriteLine("Бот успешно запущен!");
 }
 
 app.Run();
