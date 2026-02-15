@@ -1,297 +1,182 @@
 ﻿using Telegram.Bot;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-var bot = new TelegramBotClient("ТВОЙ_ТОКЕН");
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllers();
+var app = builder.Build();
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://*:{port}");
+app.MapControllers();
+
+var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
+
+// состояние пользователя
 var userState = new Dictionary<long, string>();
-var order = new Dictionary<long, OrderData>();
 
-bot.StartReceiving(Update, Error);
-
-Console.ReadLine();
-
-async Task Update(ITelegramBotClient bot, Update update, CancellationToken ct)
+if (!string.IsNullOrEmpty(token))
 {
-    // ================= CALLBACK =================
-    if (update.Type == UpdateType.CallbackQuery)
-    {
-        var chatId = update.CallbackQuery.Message.Chat.Id;
-        var data = update.CallbackQuery.Data;
+    var botClient = new TelegramBotClient(token);
+    await botClient.DeleteWebhookAsync();
 
-        // ===== НАЧАЛО ЗАКАЗА =====
-        if (data == "order")
+    botClient.StartReceiving(
+        async (bot, update, ct) =>
         {
-            userState[chatId] = "choose_flower";
+            if (update.Message is { Text: { } messageText } message)
+            {
+                var chatId = message.Chat.Id;
+                var text = messageText.ToLower();
 
-            await bot.SendTextMessageAsync(chatId,
-                "Выберите букет:",
-                replyMarkup: new InlineKeyboardMarkup(new[]
+                // ==============================
+                // 📌 ГЛАВНОЕ МЕНЮ
+                // ==============================
+
+                if (text == "/start")
                 {
-                    new[]
+                    var menu = new ReplyKeyboardMarkup(new[]
                     {
-                        InlineKeyboardButton.WithCallbackData("🌹 Розы", "rose"),
-                        InlineKeyboardButton.WithCallbackData("🌷 Тюльпаны", "tulip"),
-                        InlineKeyboardButton.WithCallbackData("🌼 Георгины", "dahlia")
+                        new KeyboardButton[] { "💰 Прайс", "🚚 Доставка" },
+                        new KeyboardButton[] { "🛒 Сделать заказ", "📞 Контакты" }
+                    })
+                    {
+                        ResizeKeyboard = true
+                    };
+
+                    await bot.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: menu);
+                    return;
+                }
+
+                // ==============================
+                // 📌 ПРАЙС
+                // ==============================
+
+                if (text == "💰 прайс" || text == "/price")
+                {
+                    var priceKeyboard = new ReplyKeyboardMarkup(new[]
+                    {
+                        new KeyboardButton[] { "Розы", "Тюльпаны", "Георгины" }
+                    })
+                    {
+                        ResizeKeyboard = true
+                    };
+
+                    await bot.SendTextMessageAsync(chatId, "Выберите цветы:", replyMarkup: priceKeyboard);
+                    return;
+                }
+
+                if (text == "розы")
+                {
+                    userState[chatId] = "roses";
+                    await bot.SendTextMessageAsync(chatId, "Сколько роз?");
+                    return;
+                }
+
+                if (text == "тюльпаны")
+                {
+                    userState[chatId] = "tulips";
+                    await bot.SendTextMessageAsync(chatId, "Сколько тюльпанов?");
+                    return;
+                }
+
+                if (text == "георгины")
+                {
+                    userState[chatId] = "dahlias";
+                    await bot.SendTextMessageAsync(chatId, "Сколько георгинов?");
+                    return;
+                }
+
+                // ввод количества
+                if (userState.ContainsKey(chatId))
+                {
+                    if (int.TryParse(messageText, out int count))
+                    {
+                        decimal price = 0;
+
+                        switch (userState[chatId])
+                        {
+                            case "roses": price = 8.6m; break;
+                            case "tulips": price = 6.6m; break;
+                            case "dahlias": price = 13m; break;
+                        }
+
+                        int total = (int)Math.Round(count * price);
+                        await bot.SendTextMessageAsync(chatId, $"Цена: {total} ₽");
                     }
-                }));
-            return;
-        }
-
-        // ===== ВЫБОР ЦВЕТОВ =====
-        if (data == "rose" || data == "tulip" || data == "dahlia")
-        {
-            order[chatId] = new OrderData { Flower = data };
-            userState[chatId] = "count";
-
-            await bot.SendTextMessageAsync(chatId,
-                "Введите количество:");
-            return;
-        }
-
-        // ===== ДОПОЛНИТЕЛЬНО =====
-        if (data == "extras_done")
-        {
-            userState[chatId] = "calendar";
-            await ShowCalendar(bot, chatId, DateTime.Now);
-            return;
-        }
-
-        if (data.StartsWith("extra_"))
-        {
-            order[chatId].Extras.Add(data.Replace("extra_", ""));
-            return;
-        }
-
-        // ===== БАНТИКИ ЦВЕТ =====
-        if (data.StartsWith("bow_"))
-        {
-            order[chatId].Extras.Add("Бантики: " + data.Replace("bow_", ""));
-            return;
-        }
-
-        // ===== КАЛЕНДАРЬ =====
-        if (data.StartsWith("date_"))
-        {
-            order[chatId].Date = data.Replace("date_", "");
-
-            await SendCheck(bot, chatId);
-            return;
-        }
-
-        if (data.StartsWith("month_"))
-        {
-            var date = DateTime.Parse(data.Replace("month_", ""));
-            await ShowCalendar(bot, chatId, date);
-            return;
-        }
-
-        // ===== ОТМЕНА =====
-        if (data == "cancel_yes")
-        {
-            await bot.SendTextMessageAsync(chatId, "❌ Заказ отменён");
-            userState.Remove(chatId);
-            order.Remove(chatId);
-            return;
-        }
-
-        if (data == "cancel_no")
-        {
-            await bot.SendTextMessageAsync(chatId,
-                "💖 Спасибо! С вами свяжутся в ближайшее время.");
-            userState.Remove(chatId);
-            return;
-        }
-    }
-
-    // ================= ТЕКСТ =================
-    if (update.Type != UpdateType.Message) return;
-
-    var msg = update.Message;
-    var chat = msg.Chat.Id;
-    var text = msg.Text;
-
-    // ===== СТАРТ =====
-    if (text == "/start")
-    {
-        await bot.SendTextMessageAsync(chat,
-            "Главное меню:",
-            replyMarkup: new ReplyKeyboardMarkup(new[]
-            {
-                new[] { "💰 Прайс", "🚚 Доставка" },
-                new[] { "🛒 Сделать заказ", "📞 Контакты" }
-            })
-            { ResizeKeyboard = true });
-
-        return;
-    }
-
-    // ===== СДЕЛАТЬ ЗАКАЗ =====
-    if (text == "🛒 Сделать заказ" || text == "/order")
-    {
-        userState[chat] = "order";
-
-        await bot.SendTextMessageAsync(chat,
-            "Нажмите кнопку ниже 👇",
-            replyMarkup: new InlineKeyboardMarkup(
-                InlineKeyboardButton.WithCallbackData("🛒 Выбрать букет", "order")));
-
-        return;
-    }
-
-    // ===== КОНТАКТЫ =====
-    if (text == "📞 Контакты" || text == "/contact")
-    {
-        await bot.SendTextMessageAsync(chat,
-            "Instagram:\nhttps://www.instagram.com/bouquet_dubossary\n\nTelegram:\n@youscum1");
-        return;
-    }
-
-    // ===== ДОСТАВКА =====
-    if (text == "🚚 Доставка")
-    {
-        await bot.SendTextMessageAsync(chat,
-            "Откуда вы?",
-            replyMarkup: new InlineKeyboardMarkup(new[]
-            {
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("ПМР", "pmr"),
-                    InlineKeyboardButton.WithCallbackData("Молдова", "md"),
-                    InlineKeyboardButton.WithCallbackData("Другие страны", "other")
+                    else
+                    {
+                        await bot.SendTextMessageAsync(chatId, "Введите число.");
+                    }
+                    return;
                 }
-            }));
-        return;
-    }
 
-    // ===== ВВОД КОЛИЧЕСТВА =====
-    if (userState.ContainsKey(chat) && userState[chat] == "count")
-    {
-        if (!int.TryParse(text, out int count)) return;
+                // ==============================
+                // 📌 ДОСТАВКА
+                // ==============================
 
-        order[chat].Count = count;
-
-        double pricePer = order[chat].Flower switch
-        {
-            "rose" => 8.6,
-            "tulip" => 6.6,
-            "dahlia" => 13,
-            _ => 0
-        };
-
-        var total = Math.Round(pricePer * count / 10) * 10;
-        order[chat].Price = total;
-
-        userState[chat] = "extras";
-
-        await bot.SendTextMessageAsync(chat,
-            $"Цена: {total} R\n\nВыберите дополнительно:",
-            replyMarkup: new InlineKeyboardMarkup(new[]
-            {
-                new[]
+                if (text == "🚚 доставка" || text == "/delivery")
                 {
-                    InlineKeyboardButton.WithCallbackData("✨ Блёстки", "extra_Блёстки"),
-                    InlineKeyboardButton.WithCallbackData("🖼 Картинка", "extra_Картинка")
-                },
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("🦋 Бабочки", "extra_Бабочки"),
-                    InlineKeyboardButton.WithCallbackData("🎀 Бантики", "bows")
-                },
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("✅ Далее", "extras_done")
+                    var deliveryKeyboard = new ReplyKeyboardMarkup(new[]
+                    {
+                        new KeyboardButton[] { "ПМР", "Молдова", "Другие страны" }
+                    })
+                    {
+                        ResizeKeyboard = true
+                    };
+
+                    await bot.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: deliveryKeyboard);
+                    return;
                 }
-            }));
 
-        return;
-    }
-}
+                if (text == "пмр")
+                {
+                    await bot.SendTextMessageAsync(chatId,
+                        "Города ПМР:\nКаменка, Рыбница, Дубоссары, Григориополь, Тирасполь, Бендеры, Слободзея");
+                    return;
+                }
 
-async Task ShowCalendar(ITelegramBotClient bot, long chatId, DateTime month)
-{
-    var buttons = new List<List<InlineKeyboardButton>>();
+                if (text == "молдова")
+                {
+                    await bot.SendTextMessageAsync(chatId,
+                        "Доставка: Nova Poshta или маршрутка");
+                    return;
+                }
 
-    int days = DateTime.DaysInMonth(month.Year, month.Month);
-    int day = 1;
+                if (text == "другие страны")
+                {
+                    await bot.SendTextMessageAsync(chatId,
+                        "К сожалению, доставка только по ПМР и Молдове.");
+                    return;
+                }
 
-    while (day <= days)
-    {
-        var row = new List<InlineKeyboardButton>();
+                // ==============================
+                // 📌 КОНТАКТЫ
+                // ==============================
 
-        for (int i = 0; i < 7 && day <= days; i++)
-        {
-            var date = new DateTime(month.Year, month.Month, day);
-            row.Add(InlineKeyboardButton.WithCallbackData(
-                day.ToString(),
-                "date_" + date.ToString("dd.MM.yyyy")));
-            day++;
-        }
+                if (text == "📞 контакты" || text == "/contacts")
+                {
+                    await bot.SendTextMessageAsync(chatId,
+                        "Наши контакты:\n\n" +
+                        "Instagram:\nhttps://www.instagram.com/bouquet_dubossary\n\n" +
+                        "Telegram: @youscum1");
+                    return;
+                }
 
-        buttons.Add(row);
-    }
+                // ==============================
+                // 📌 СДЕЛАТЬ ЗАКАЗ
+                // ==============================
 
-    var nav = new List<InlineKeyboardButton>();
-
-    if (month > DateTime.Now)
-        nav.Add(InlineKeyboardButton.WithCallbackData("⬅️",
-            "month_" + month.AddMonths(-1).ToString("yyyy-MM-01")));
-
-    nav.Add(InlineKeyboardButton.WithCallbackData("➡️",
-        "month_" + month.AddMonths(1).ToString("yyyy-MM-01")));
-
-    buttons.Add(nav);
-
-    await bot.SendTextMessageAsync(chatId,
-        $"📅 Выберите дату ({month:MMMM yyyy})",
-        replyMarkup: new InlineKeyboardMarkup(buttons));
-}
-
-async Task SendCheck(ITelegramBotClient bot, long chatId)
-{
-    var o = order[chatId];
-
-    var extras = o.Extras.Count > 0
-        ? string.Join(", ", o.Extras)
-        : "Нет";
-
-    var buyer = o.UserName ?? "Без username";
-
-    await bot.SendTextMessageAsync(chatId,
-$@"✅ ЧЕК-ЗАКАЗ
-
-Продавец: Youscam
-Покупатель: @{buyer}
-
-Букет: {o.Flower}
-Количество: {o.Count}
-Дополнительно: {extras}
-
-Сумма: {o.Price} R
-Дата: {o.Date}",
-        replyMarkup: new InlineKeyboardMarkup(new[]
-        {
-            new[]
-            {
-                InlineKeyboardButton.WithCallbackData("❌ Да", "cancel_yes"),
-                InlineKeyboardButton.WithCallbackData("✔️ Нет", "cancel_no")
+                if (text == "🛒 сделать заказ" || text == "/order")
+                {
+                    await bot.SendTextMessageAsync(chatId,
+                        "Напишите, какой букет хотите заказать 🌸");
+                    return;
+                }
             }
-        }));
+        },
+        async (bot, ex, ct) => Console.WriteLine("Ошибка: " + ex.Message)
+    );
+
+    Console.WriteLine("Бот запущен!");
 }
 
-Task Error(ITelegramBotClient bot, Exception ex, CancellationToken ct)
-{
-    Console.WriteLine(ex.Message);
-    return Task.CompletedTask;
-}
-
-class OrderData
-{
-    public string Flower { get; set; }
-    public int Count { get; set; }
-    public double Price { get; set; }
-    public string Date { get; set; }
-    public List<string> Extras { get; set; } = new();
-    public string UserName { get; set; }
-}
+app.Run();
