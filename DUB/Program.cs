@@ -221,18 +221,21 @@ if (!string.IsNullOrEmpty(token))
                         }
                     // Доставка
                     case "delivery_pmr":
-                        var pmrCities = new InlineKeyboardMarkup(new[]
-                        {
-                            new [] { InlineKeyboardButton.WithCallbackData("Каменка", "pmr_kamenka") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Рыбница", "pmr_rybnica") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Дубоссары", "pmr_dubossary") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Григориополь", "pmr_grigoriopol") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Тирасполь", "pmr_tiraspol") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Бендеры", "pmr_bendery") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Слободзея", "pmr_slobodeya") },
-                        });
-                        await botClient.SendTextMessageAsync(chatId, "Выберите город:", replyMarkup: pmrCities);
+                        // Просто отправляем сообщение без кнопок
+                        await botClient.SendTextMessageAsync(chatId,
+                    @"🚚 Способы доставки по ПМР:
+
+👥 Личная встреча возможна в Тирасполе и Дубоссарах
+
+🚌 Маршруткой  
+— быстрая доставка в другие города  
+— оплата при получении  
+
+📮 Почтой  
+— доставка по всей стране  
+— срок 2–5 дней");
                         break;
+
 
                     case "delivery_moldova":
 
