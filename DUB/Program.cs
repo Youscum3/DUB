@@ -32,11 +32,30 @@ if (!string.IsNullOrEmpty(token))
                 var username = message.From.Username ?? message.From.FirstName;
 
                 // Ввод количества
-                // ===== КАЛЬКУЛЯТОР ЦЕН =====
-                if (userState.ContainsKey(chatId) &&
-                   (userState[chatId] == "roses" ||
-                    userState[chatId] == "tulips" ||
-                    userState[chatId] == "dahlias"))
+                if (userState.ContainsKey(chatId) && userState[chatId] == "await_custom_quantity")
+                {
+                    if (int.TryParse(messageText, out int count))
+                    {
+                        decimal pricePerUnit = userFlower[chatId] switch
+                        {
+                            "roses" => 8.6m,
+                            "tulips" => 6.6m,
+                            "dahlias" => 13m,
+                            _ => 0m
+                        };
+
+                        int total = (int)Math.Round(count * pricePerUnit, 0, MidpointRounding.AwayFromZero);
+
+                        await botClient.SendTextMessageAsync(chatId, $"💰 Цена за {count} шт.: {total}₽");
+
+                        userState.Remove(chatId); // сбрасываем состояние
+                    }
+                    else
+                    {
+                        await botClient.SendTextMessageAsync(chatId, "Введите число.");
+                    }
+                    return;
+                }
                 {
                     if (int.TryParse(messageText, out int count))
                     {
@@ -114,6 +133,45 @@ if (!string.IsNullOrEmpty(token))
 
                 switch (data)
                 {
+                    // Прямо после category_* кейсов
+                    case "price_category_roses_15":
+                    case "price_category_tulips_15":
+                    case "price_category_dahlias_15":
+                    case "price_category_roses_31":
+                    case "price_category_tulips_31":
+                    case "price_category_dahlias_31":
+                    case "price_category_roses_51":
+                    case "price_category_tulips_51":
+                    case "price_category_dahlias_51":
+                    case "price_category_roses_101":
+                    case "price_category_tulips_101":
+                    case "price_category_dahlias_101":
+                        {
+                            // Определяем количество
+                            int count = int.Parse(data.Split('_')[3]); // "price_category_roses_15" -> 15
+
+                            decimal pricePerUnit = data.Contains("roses") ? 8.6m :
+                                                   data.Contains("tulips") ? 6.6m :
+                                                   data.Contains("dahlias") ? 13m : 0m;
+
+                            int total = (int)Math.Round(count * pricePerUnit, 0, MidpointRounding.AwayFromZero);
+
+                            await botClient.SendTextMessageAsync(chatId, $"💰 Цена за {count} шт.: {total}₽");
+                            break;
+                        }
+
+                    case "price_category_roses_other":
+                    case "price_category_tulips_other":
+                    case "price_category_dahlias_other":
+                        {
+                            // Запоминаем, что ждём ввод числа
+                            userState[chatId] = "await_custom_quantity";
+                            userFlower[chatId] = data.Contains("roses") ? "roses" :
+                                                 data.Contains("tulips") ? "tulips" : "dahlias";
+
+                            await botClient.SendTextMessageAsync(chatId, "Введите количество:");
+                            break;
+                        }
                     case "start_menu":
                         await ShowMainMenu(chatId);
                         break;
