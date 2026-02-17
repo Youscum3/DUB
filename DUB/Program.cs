@@ -67,7 +67,15 @@ if (!string.IsNullOrEmpty(token))
                 else if (messageText.ToLower().StartsWith("/contacts"))
                     await ShowContacts(chatId);
                 else if (messageText.ToLower().StartsWith("/delivery"))
-                    await ShowDeliveryMenu(chatId);
+                {
+                    var keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Молдова", "delivery_moldova") },
+                        new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
+                    });
+                    await bot.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: keyboard);
+                }
             }
             else if (update.CallbackQuery is { Data: { } data })
             {
@@ -80,6 +88,53 @@ if (!string.IsNullOrEmpty(token))
                     case "start_order": await ShowOrderMenu(chatId); break;
                     case "start_contacts": await ShowContacts(chatId); break;
                     case "start_delivery": await ShowDeliveryMenu(chatId); break;
+
+                    // Доставка
+                    case "delivery_pmr":
+                        var pmrCities = new InlineKeyboardMarkup(new[]
+                        {
+                            new [] { InlineKeyboardButton.WithCallbackData("Каменка", "pmr_kamenka") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Рыбница", "pmr_rybnica") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Дубоссары", "pmr_dubossary") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Григориополь", "pmr_grigoriopol") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Тирасполь", "pmr_tiraspol") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Бендеры", "pmr_bendery") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Слободзея", "pmr_slobodeya") },
+                        });
+                        await botClient.SendTextMessageAsync(chatId, "Выберите город:", replyMarkup: pmrCities);
+                        break;
+
+                    case "delivery_moldova":
+                        var moldovaKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+                            new [] { InlineKeyboardButton.WithCallbackData("Nova Poshta", "moldova_nova") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Маршрутки", "moldova_bus") }
+                        });
+                        await botClient.SendTextMessageAsync(chatId, "Выберите способ доставки:", replyMarkup: moldovaKeyboard);
+                        break;
+
+                    case "delivery_other":
+                        await botClient.SendTextMessageAsync(chatId, "К сожалению, доставка только по ПМР и Молдове.");
+                        break;
+
+                    case "pmr_kamenka":
+                    case "pmr_rybnica":
+                    case "pmr_grigoriopol":
+                    case "pmr_bendery":
+                    case "pmr_slobodeya":
+                    case "pmr_knopki":
+                        var pmrDeliveryKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+                            new [] { InlineKeyboardButton.WithCallbackData("Маршрутка", $"{data}_bus") },
+                            new [] { InlineKeyboardButton.WithCallbackData("Почта", $"{data}_mail") }
+                        });
+                        await botClient.SendTextMessageAsync(chatId, "Выберите способ доставки:", replyMarkup: pmrDeliveryKeyboard);
+                        break;
+
+                    case "pmr_dubossary":
+                    case "pmr_tiraspol":
+                        await botClient.SendTextMessageAsync(chatId, "Личная встреча");
+                        break;
 
                     // Категории цветов
                     case "order_roses":
@@ -109,14 +164,13 @@ if (!string.IsNullOrEmpty(token))
                         await ShowCalendar(chatId, DateTime.Today.Year, DateTime.Today.Month);
                         break;
 
-                    // Календарь
+                    // Календарь и завершение
                     default:
                         if (data.StartsWith("date_"))
                         {
                             var dateSelected = DateTime.ParseExact(data.Substring(5), "yyyy-MM-dd", null);
                             userDate[chatId] = dateSelected;
 
-                            // Расчет суммы
                             decimal pricePerUnit = userFlower[chatId] switch
                             {
                                 "roses" => 8.6m,
@@ -127,7 +181,6 @@ if (!string.IsNullOrEmpty(token))
                             decimal total = userQuantity[chatId] * pricePerUnit;
                             int rounded = (int)Math.Round(total, 0, MidpointRounding.AwayFromZero);
 
-                            // Чек
                             string extrasText = userExtras.ContainsKey(chatId) ? string.Join(", ", userExtras[chatId]) : "Нет";
                             string flowerName = userFlower[chatId];
                             string receipt = $"✅ Чек заказа:\n\nПродавец: Youscam\nПокупатель: @{username}\nБукет: {flowerName}\nКоличество: {userQuantity[chatId]}\nДополнительно: {extrasText}\nСумма: {rounded}₽\nДата доставки: {dateSelected:dd.MM.yyyy}";
@@ -135,7 +188,6 @@ if (!string.IsNullOrEmpty(token))
                             await botClient.SendTextMessageAsync(chatId, receipt);
                             await botClient.SendTextMessageAsync(chatId, "В ближайшее время с вами свяжется.");
 
-                            // Очистка состояния для нового заказа
                             userState.Remove(chatId);
                             userQuantity.Remove(chatId);
                             userExtras.Remove(chatId);
@@ -144,11 +196,19 @@ if (!string.IsNullOrEmpty(token))
                         }
                         else if (data.StartsWith("month_"))
                         {
-                            var parts = data.Substring(6).Split('-'); // month_2026-03
+                            var parts = data.Substring(6).Split('-');
                             int year = int.Parse(parts[0]);
                             int month = int.Parse(parts[1]);
                             await ShowCalendar(chatId, year, month);
                         }
+                        else if (data.EndsWith("_bus"))
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
+                        else if (data.EndsWith("_mail"))
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по почте.");
+                        else if (data == "moldova_nova")
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку через Nova Poshta.");
+                        else if (data == "moldova_bus")
+                            await botClient.SendTextMessageAsync(chatId, "Вы выбрали доставку по маршрутке.");
                         break;
                 }
 
@@ -206,7 +266,19 @@ if (!string.IsNullOrEmpty(token))
 
     async Task ShowDeliveryMenu(long chatId)
     {
-        await botClient.SendTextMessageAsync(chatId, "Раздел доставки пока без изменений.");
+        var keyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithCallbackData("Delivery", "delivery_pmr") } // Или вызов общего меню выбора региона
+        });
+
+        // Согласно вашему новому коду, вызываем выбор региона
+        var regionKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
+            new [] { InlineKeyboardButton.WithCallbackData("Молдова", "delivery_moldova") },
+            new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
+        });
+        await botClient.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: regionKeyboard);
     }
 
     async Task ShowCalendar(long chatId, int year, int month)
@@ -225,7 +297,6 @@ if (!string.IsNullOrEmpty(token))
             buttons.Add(week.ToArray());
         }
 
-        // Кнопка "Следующий месяц" если не декабрь
         if (month < 12)
         {
             var nextMonth = new DateTime(year, month, 1).AddMonths(1);
