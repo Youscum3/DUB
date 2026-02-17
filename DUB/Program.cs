@@ -32,6 +32,37 @@ if (!string.IsNullOrEmpty(token))
                 var username = message.From.Username ?? message.From.FirstName;
 
                 // Ввод количества
+                // ===== КАЛЬКУЛЯТОР ЦЕН =====
+                if (userState.ContainsKey(chatId) &&
+                   (userState[chatId] == "roses" ||
+                    userState[chatId] == "tulips" ||
+                    userState[chatId] == "dahlias"))
+                {
+                    if (int.TryParse(messageText, out int count))
+                    {
+                        decimal pricePerUnit = userState[chatId] switch
+                        {
+                            "roses" => 8.6m,
+                            "tulips" => 6.6m,
+                            "dahlias" => 13m,
+                            _ => 0m
+                        };
+
+                        decimal total = count * pricePerUnit;
+                        int rounded = (int)Math.Round(total, 0, MidpointRounding.AwayFromZero);
+
+                        await botClient.SendTextMessageAsync(
+                            chatId,
+                            $"💰 Цена: {rounded}₽\n\nВведите другое количество или выберите меню"
+                        );
+                    }
+                    else
+                    {
+                        await botClient.SendTextMessageAsync(chatId, "Введите число.");
+                    }
+
+                    return;
+                }
                 if (userState.ContainsKey(chatId) && userState[chatId] == "await_quantity")
                 {
                     if (int.TryParse(messageText, out int count))
@@ -152,11 +183,11 @@ if (!string.IsNullOrEmpty(token))
                         break;
 
                     // Категории цветов
-                    case "order_roses":
-                    case "order_tulips":
-                    case "order_dahlias":
-                        userFlower[chatId] = data.Substring(6); // order_roses -> roses
-                        userState[chatId] = "await_quantity";
+                    // ===== КАТЕГОРИИ ДЛЯ ПРАЙСА =====
+                    case "category_roses":
+                    case "category_tulips":
+                    case "category_dahlias":
+                        userState[chatId] = data.Substring(9); // category_roses -> roses
                         await botClient.SendTextMessageAsync(chatId, "Введите количество:");
                         break;
 
