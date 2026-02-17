@@ -267,24 +267,38 @@ if (!string.IsNullOrEmpty(token))
     // ==== МЕНЮ ====
     async Task ShowMainMenu(long chatId)
     {
+        // 💥 СБРОС СОСТОЯНИЯ
+        userState.Remove(chatId);
+        userQuantity.Remove(chatId);
+        userExtras.Remove(chatId);
+        userFlower.Remove(chatId);
+        userDate.Remove(chatId);
+
         var mainKeyboard = new InlineKeyboardMarkup(new[]
         {
-            new [] { InlineKeyboardButton.WithCallbackData("Цены", "start_price") },
-            new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
-            new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") },
-            new [] { InlineKeyboardButton.WithCallbackData("Сделать заказ", "start_order") }
-        });
+        new [] { InlineKeyboardButton.WithCallbackData("Цены", "start_price") },
+        new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
+        new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") },
+        new [] { InlineKeyboardButton.WithCallbackData("Сделать заказ", "start_order") }
+    });
         await botClient.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
     }
 
     async Task ShowPriceMenu(long chatId)
     {
+        // 💥 СБРОС СОСТОЯНИЯ перед показом меню
+        userState.Remove(chatId);
+        userQuantity.Remove(chatId);
+        userExtras.Remove(chatId);
+        userFlower.Remove(chatId);
+        userDate.Remove(chatId);
+
         var keyboard = new InlineKeyboardMarkup(new[]
         {
-            new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
-            new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
-            new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
-        });
+        new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
+        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
+        new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
+    });
         await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
     }
 
