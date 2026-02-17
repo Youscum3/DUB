@@ -158,7 +158,42 @@ if (!string.IsNullOrEmpty(token))
 
                         await ShowDeliveryMenu(chatId);
                         break;
+                    case "category_roses":
+                    case "category_tulips":
+                    case "category_dahlias":
+                        {
+                            string flowerName = data switch
+                            {
+                                "category_roses" => "Розы",
+                                "category_tulips" => "Тюльпаны",
+                                "category_dahlias" => "Георгины",
+                                _ => ""
+                            };
 
+                            decimal pricePerUnit = data switch
+                            {
+                                "category_roses" => 8.6m,
+                                "category_tulips" => 6.6m,
+                                "category_dahlias" => 13m,
+                                _ => 0m
+                            };
+
+                            // Создаём **новое имя переменной**, чтобы не конфликтовало
+                            var priceQuantityKeyboard = new InlineKeyboardMarkup(new[]
+                            {
+            new [] { InlineKeyboardButton.WithCallbackData("15", $"price_{data}_15"),
+                    InlineKeyboardButton.WithCallbackData("31", $"price_{data}_31"),
+                    InlineKeyboardButton.WithCallbackData("51", $"price_{data}_51") },
+            new [] { InlineKeyboardButton.WithCallbackData("101", $"price_{data}_101"),
+                    InlineKeyboardButton.WithCallbackData("Другое количество", $"price_{data}_other") }
+        });
+
+                            await botClient.SendTextMessageAsync(chatId,
+                                $"💰 {flowerName}\nЦена за штуку: {pricePerUnit}₽\nВыберите количество:",
+                                replyMarkup: priceQuantityKeyboard);
+
+                            break;
+                        }
                     // Доставка
                     case "delivery_pmr":
                         var pmrCities = new InlineKeyboardMarkup(new[]
