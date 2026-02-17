@@ -189,7 +189,7 @@ if (!string.IsNullOrEmpty(token))
         });
 
                             await botClient.SendTextMessageAsync(chatId,
-                                $"💰 {pricePerUnit}₽\nВыберите количество:",
+                                $"\nВыберите количество:",
                                 replyMarkup: priceQuantityKeyboard);
 
                             break;
