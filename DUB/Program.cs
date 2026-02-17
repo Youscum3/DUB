@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,12 +19,15 @@ var userExtras = new Dictionary<long, List<string>>();
 var userFlower = new Dictionary<long, string>();
 var userDate = new Dictionary<long, DateTime>();
 
+TelegramBotClient botClient = null;
 if (!string.IsNullOrEmpty(token))
 {
-    var botClient = new TelegramBotClient(token);
+    botClient = new TelegramBotClient(token); // теперь это та же переменная, что снаружи
     await botClient.DeleteWebhookAsync();
+}
 
-    botClient.StartReceiving(
+
+botClient.StartReceiving(
         async (bot, update, ct) =>
         {
             if (update.Message is { Text: { } messageText } message)
@@ -32,38 +36,35 @@ if (!string.IsNullOrEmpty(token))
                 var username = message.From.Username ?? message.From.FirstName;
 
                 // Ввод количества
-                    // Ввод количества при стандартном заказе
-                    if (userState.ContainsKey(chatId) && userState[chatId] == "await_quantity")
+                // Ввод количества при стандартном заказе
+                int count; // один раз в начале метода
+                if (int.TryParse(messageText, out count))
                 {
-                    if (int.TryParse(messageText, out int count))
-                    {
-                        userQuantity[chatId] = count;
-                        userState[chatId] = "await_extras";
-
-                        // показать клавиатуру с дополнительными элементами
-                    }
-                    else
-                    {
-                        await botClient.SendTextMessageAsync(chatId, "Пожалуйста, введите число.");
-                    }
-                    return;
+                    userQuantity[chatId] = count;
+                    userState[chatId] = "await_extras";
                 }
-                
+                else
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Пожалуйста, введите число.");
+                }
+
+
+                // Ввод количества
                 if (userState.ContainsKey(chatId) && userState[chatId] == "await_quantity")
                 {
-                    if (int.TryParse(messageText, out int count))
+                    if (int.TryParse(messageText, out int countParsed))
                     {
-                        userQuantity[chatId] = count;
+                        userQuantity[chatId] = countParsed;
                         userState[chatId] = "await_extras";
 
                         // Показать дополнительные товары
                         var extrasKeyboard = new InlineKeyboardMarkup(new[]
                         {
-                            new [] { InlineKeyboardButton.WithCallbackData("Блёстки", "extra_glitter"), InlineKeyboardButton.WithCallbackData("Картинка", "extra_picture") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Игрушка", "extra_toy"), InlineKeyboardButton.WithCallbackData("Бабочки", "extra_butterfly") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Бантики", "extra_ribbons") },
-                            new [] { InlineKeyboardButton.WithCallbackData("✅ Готово", "extras_done") }
-                        });
+            new [] { InlineKeyboardButton.WithCallbackData("Блёстки", "extra_glitter"), InlineKeyboardButton.WithCallbackData("Картинка", "extra_picture") },
+            new [] { InlineKeyboardButton.WithCallbackData("Игрушка", "extra_toy"), InlineKeyboardButton.WithCallbackData("Бабочки", "extra_butterfly") },
+            new [] { InlineKeyboardButton.WithCallbackData("Бантики", "extra_ribbons") },
+            new [] { InlineKeyboardButton.WithCallbackData("✅ Готово", "extras_done") }
+        });
 
                         await botClient.SendTextMessageAsync(chatId, "Выберите дополнительные элементы (можно несколько):", replyMarkup: extrasKeyboard);
                     }
@@ -71,8 +72,8 @@ if (!string.IsNullOrEmpty(token))
                     {
                         await botClient.SendTextMessageAsync(chatId, "Пожалуйста, введите число.");
                     }
-                    return;
                 }
+
 
                 // Команды и старт
                 if (messageText.ToLower().StartsWith("/start"))
@@ -123,8 +124,11 @@ if (!string.IsNullOrEmpty(token))
 
                             int total = (int)Math.Round(count * pricePerUnit, 0, MidpointRounding.AwayFromZero);
 
-                            await botClient.SendTextMessageAsync(chatId, $"💰 Цена за {count} шт.: {total}₽");
+                            await botClient.SendTextMessageAsync(chatId, $"💰 Цена за {count} шт.: {total}₽",
+    replyMarkup: GetBackToMenuKeyboard());
                             break;
+
+
                         }
 
                     case "price_category_roses_other":
@@ -221,9 +225,8 @@ if (!string.IsNullOrEmpty(token))
                         }
                     // Доставка
                     case "delivery_pmr":
-                        // Просто отправляем сообщение без кнопок
                         await botClient.SendTextMessageAsync(chatId,
-                    @"🚚 Способы доставки по ПМР:
+                        @"🚚 Способы доставки по ПМР: 
 
 👥 Личная встреча возможна в Тирасполе и Дубоссарах
 
@@ -233,27 +236,35 @@ if (!string.IsNullOrEmpty(token))
 
 📮 Почтой  
 — доставка по всей стране  
-— срок 2–5 дней");
+— срок 2–5 дней",
+                        replyMarkup: GetBackToMenuKeyboard()
+                        );
                         break;
+
 
 
                     case "delivery_moldova":
-
                         await botClient.SendTextMessageAsync(chatId,
-                    @"🚚 Способы доставки по Молдове:
+                        @"🚚 Способы доставки по Молдове:
 
-  🚌 Маршруткой  
-  — быстрая доставка в города  
-  — оплата при получении  
+🚌 Маршруткой  
+— быстрая доставка в города  
+— оплата при получении  
 
-  📦 Nova Poshta  
-  — доставка в отделение  
-  — срок 2–5 дней");
+📦 Nova Poshta  
+— доставка в отделение  
+— срок 2–5 дней",
+                        replyMarkup: GetBackToMenuKeyboard() // <- добавляем кнопку
+                        );
                         break;
+
 
                     case "delivery_other":
-                        await botClient.SendTextMessageAsync(chatId, "К сожалению, доставка только по ПМР и Молдове.");
+                        await botClient.SendTextMessageAsync(chatId, "К сожалению, доставка только по ПМР и Молдове.",
+                            replyMarkup: GetBackToMenuKeyboard()
+                        );
                         break;
+
 
                     case "pmr_kamenka":
                     case "pmr_rybnica":
@@ -462,111 +473,115 @@ if (!string.IsNullOrEmpty(token))
         async (bot, ex, ct) => Console.WriteLine(ex.Message)
     );
 
-    // ==== МЕНЮ ====
-    async Task ShowMainMenu(long chatId)
-    {
-        // 💥 СБРОС СОСТОЯНИЯ
-        userState.Remove(chatId);
-        userQuantity.Remove(chatId);
-        userExtras.Remove(chatId);
-        userFlower.Remove(chatId);
-        userDate.Remove(chatId);
+// ==== МЕНЮ ====
+// ==== МЕНЮ ====
 
-        var mainKeyboard = new InlineKeyboardMarkup(new[]
-        {
+async Task ShowMainMenu(long chatId)
+{
+    userState.Remove(chatId);
+    userQuantity.Remove(chatId);
+    userExtras.Remove(chatId);
+    userFlower.Remove(chatId);
+    userDate.Remove(chatId);
+
+    var mainKeyboard = new InlineKeyboardMarkup(new[]
+    {
         new [] { InlineKeyboardButton.WithCallbackData("Цены", "start_price") },
         new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
         new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") },
         new [] { InlineKeyboardButton.WithCallbackData("Сделать заказ", "start_order") }
     });
-        await botClient.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
-    }
+    await botClient.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
+}
 
-    async Task ShowPriceMenu(long chatId)
+async Task ShowPriceMenu(long chatId)
+{
+    userState.Remove(chatId);
+    userQuantity.Remove(chatId);
+    userExtras.Remove(chatId);
+    userFlower.Remove(chatId);
+    userDate.Remove(chatId);
+
+    var keyboard = new InlineKeyboardMarkup(new[]
     {
-        // 💥 СБРОС СОСТОЯНИЯ перед показом меню
-        userState.Remove(chatId);
-        userQuantity.Remove(chatId);
-        userExtras.Remove(chatId);
-        userFlower.Remove(chatId);
-        userDate.Remove(chatId);
-
-        var keyboard = new InlineKeyboardMarkup(new[]
-        {
         new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
         new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
         new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
     });
-        await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
-    }
+    await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
+}
 
-    async Task ShowOrderMenu(long chatId)
+async Task ShowOrderMenu(long chatId)
+{
+    var keyboard = new InlineKeyboardMarkup(new[]
     {
-        var keyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] { InlineKeyboardButton.WithCallbackData("Розы", "order_roses") },
-            new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "order_tulips") },
-            new [] { InlineKeyboardButton.WithCallbackData("Георгины", "order_dahlias") }
-        });
-        await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
-    }
+        new [] { InlineKeyboardButton.WithCallbackData("Розы", "order_roses") },
+        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "order_tulips") },
+        new [] { InlineKeyboardButton.WithCallbackData("Георгины", "order_dahlias") }
+    });
+    await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: keyboard);
+}
 
-    async Task ShowContacts(long chatId)
-    {
-        await botClient.SendTextMessageAsync(chatId,
-    @"📞 Наши контакты
+async Task ShowContacts(long chatId)
+{
+    await botClient.SendTextMessageAsync(chatId,
+@"📞 Наши контакты
 
 💬 Telegram мастера: @Vethbu  
 📢 Telegram канал: https://t.me/+6a3DugGFBHwzMmJi  
 
 🎵 TikTok: https://www.tiktok.com/@bouquet_dubossary  
-📷 Instagram: https://www.instagram.com/bouquet_dubossary");
-    }
-
-    async Task ShowDeliveryMenu(long chatId)
-    {
-        var keyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] { InlineKeyboardButton.WithCallbackData("Delivery", "delivery_pmr") } // Или вызов общего меню выбора региона
-        });
-
-        // Согласно вашему новому коду, вызываем выбор региона
-        var regionKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
-            new [] { InlineKeyboardButton.WithCallbackData("Молдова", "delivery_moldova") },
-            new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
-        });
-        await botClient.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: regionKeyboard);
-    }
-
-    async Task ShowCalendar(long chatId, int year, int month)
-    {
-        var daysInMonth = DateTime.DaysInMonth(year, month);
-        var buttons = new List<InlineKeyboardButton[]>();
-
-        for (int d = 1; d <= daysInMonth; d += 7)
-        {
-            var week = new List<InlineKeyboardButton>();
-            for (int i = d; i < d + 7 && i <= daysInMonth; i++)
-            {
-                var date = new DateTime(year, month, i);
-                week.Add(InlineKeyboardButton.WithCallbackData(i.ToString(), $"date_{date:yyyy-MM-dd}"));
-            }
-            buttons.Add(week.ToArray());
-        }
-
-        if (month < 12)
-        {
-            var nextMonth = new DateTime(year, month, 1).AddMonths(1);
-            buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("➡️ Следующий месяц", $"month_{nextMonth:yyyy-MM}") });
-        }
-
-        var calendar = new InlineKeyboardMarkup(buttons.ToArray());
-        await botClient.SendTextMessageAsync(chatId, $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)} {year}", replyMarkup: calendar);
-    }
-
-    Console.WriteLine("Бот запущен!");
+📷 Instagram: https://www.instagram.com/bouquet_dubossary",
+        replyMarkup: GetBackToMenuKeyboard());
 }
 
+// ==== Исправленный ShowDeliveryMenu ====
+async Task ShowDeliveryMenu(long chatId)
+{
+    var regionKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] { InlineKeyboardButton.WithCallbackData("ПМР", "delivery_pmr") },
+        new [] { InlineKeyboardButton.WithCallbackData("Молдова", "delivery_moldova") },
+        new [] { InlineKeyboardButton.WithCallbackData("Другие страны", "delivery_other") }
+    });
+
+    await botClient.SendTextMessageAsync(chatId, "Откуда вы?", replyMarkup: regionKeyboard);
+}
+
+async Task ShowCalendar(long chatId, int year, int month)
+{
+    var daysInMonth = DateTime.DaysInMonth(year, month);
+    var buttons = new List<InlineKeyboardButton[]>();
+
+    for (int d = 1; d <= daysInMonth; d += 7)
+    {
+        var week = new List<InlineKeyboardButton>();
+        for (int i = d; i < d + 7 && i <= daysInMonth; i++)
+        {
+            var date = new DateTime(year, month, i);
+            week.Add(InlineKeyboardButton.WithCallbackData(i.ToString(), $"date_{date:yyyy-MM-dd}"));
+        }
+        buttons.Add(week.ToArray());
+    }
+
+    if (month < 12)
+    {
+        var nextMonth = new DateTime(year, month, 1).AddMonths(1);
+        buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("➡️ Следующий месяц", $"month_{nextMonth:yyyy-MM}") });
+    }
+
+    var calendar = new InlineKeyboardMarkup(buttons.ToArray());
+    await botClient.SendTextMessageAsync(chatId, $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)} {year}", replyMarkup: calendar);
+}
+
+InlineKeyboardMarkup GetBackToMenuKeyboard()
+{
+    return new InlineKeyboardMarkup(new[]
+    {
+        new [] { InlineKeyboardButton.WithCallbackData("🏠 Меню", "start_menu") }
+    });
+}
+
+
+Console.WriteLine("Бот запущен!");
 app.Run();
