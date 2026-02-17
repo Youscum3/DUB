@@ -171,12 +171,17 @@ if (!string.IsNullOrEmpty(token))
                         break;
 
                     case "delivery_moldova":
-                        var moldovaKeyboard = new InlineKeyboardMarkup(new[]
-                        {
-                            new [] { InlineKeyboardButton.WithCallbackData("Nova Poshta", "moldova_nova") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Маршрутки", "moldova_bus") }
-                        });
-                        await botClient.SendTextMessageAsync(chatId, "Выберите способ доставки:", replyMarkup: moldovaKeyboard);
+
+                        await botClient.SendTextMessageAsync(chatId,
+                    @"🚚 Способы доставки по Молдове:
+
+                    🚌 Маршруткой  
+                    — быстрая доставка в города  
+                    — оплата при получении  
+
+                    📦 Nova Poshta  
+                    — доставка в отделение  
+                    — срок 2–5 дней");
                         break;
 
                     case "delivery_other":
@@ -189,14 +194,19 @@ if (!string.IsNullOrEmpty(token))
                     case "pmr_bendery":
                     case "pmr_slobodeya":
                     case "pmr_knopki":
-                        var pmrDeliveryKeyboard = new InlineKeyboardMarkup(new[]
-                        {
-                            new [] { InlineKeyboardButton.WithCallbackData("Маршрутка", $"{data}_bus") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Почта", $"{data}_mail") }
-                        });
-                        await botClient.SendTextMessageAsync(chatId, "Выберите способ доставки:", replyMarkup: pmrDeliveryKeyboard);
-                        break;
 
+                        await botClient.SendTextMessageAsync(chatId,
+                    @"🚚 Способы доставки:
+
+                    🚌 Маршруткой  
+                    — быстрая доставка в другие города  
+                     — оплата при получении  
+
+                    📮 Почтой  
+                    — доставка по всей стране  
+                    — срок 2–5 дней");
+
+                        break;
                     case "pmr_dubossary":
                     case "pmr_tiraspol":
                         await botClient.SendTextMessageAsync(chatId, "Личная встреча");
