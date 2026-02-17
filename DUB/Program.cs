@@ -386,13 +386,14 @@ if (!string.IsNullOrEmpty(token))
 
     async Task ShowContacts(long chatId)
     {
-        var keyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] { InlineKeyboardButton.WithUrl("Instagram: bouquet_dubossary", "https://www.instagram.com/bouquet_dubossary") }
-        });
+        await botClient.SendTextMessageAsync(chatId,
+    @"📞 Наши контакты
 
-        await botClient.SendTextMessageAsync(chatId, "Наши контакты:", replyMarkup: keyboard);
-        await botClient.SendTextMessageAsync(chatId, "Telegram: @Youscam");
+💬 Telegram мастера: @Vethbu  
+📢 Telegram канал: https://t.me/+6a3DugGFBHwzMmJi  
+
+🎵 TikTok: https://www.tiktok.com/@bouquet_dubossary  
+📷 Instagram: https://www.instagram.com/bouquet_dubossary");
     }
 
     async Task ShowDeliveryMenu(long chatId)
