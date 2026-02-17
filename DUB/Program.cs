@@ -203,22 +203,11 @@ if (!string.IsNullOrEmpty(token))
                         break;
 
                     // Категории цветов
-                    case "order_roses":
-                        userFlower[chatId] = "roses";
-                        userState[chatId] = "await_quantity";
-                        await botClient.SendTextMessageAsync(chatId, "Введите количество роз:");
-                        break;
-
-                    case "order_tulips":
-                        userFlower[chatId] = "tulips";
-                        userState[chatId] = "await_quantity";
-                        await botClient.SendTextMessageAsync(chatId, "Введите количество тюльпанов:");
-                        break;
-
-                    case "order_dahlias":
-                        userFlower[chatId] = "dahlias";
-                        userState[chatId] = "await_quantity";
-                        await botClient.SendTextMessageAsync(chatId, "Введите количество георгин:");
+                    case "category_roses":
+                    case "category_tulips":
+                    case "category_dahlias":
+                        userState[chatId] = data.Substring(9); // category_roses -> roses
+                        await botClient.SendTextMessageAsync(chatId, "Введите количество:");
                         break;
 
                     // Дополнительно
