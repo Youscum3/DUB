@@ -239,6 +239,26 @@ if (!string.IsNullOrEmpty(token))
                         userState[chatId] = "await_date";
                         await ShowCalendar(chatId, DateTime.Today.Year, DateTime.Today.Month);
                         break;
+                    case "confirm_yes":
+                        await botClient.SendTextMessageAsync(chatId, "✅ Заказ подтверждён!\nВ ближайшее время с вами свяжутся.");
+
+                        // Теперь очищаем данные
+                        userState.Remove(chatId);
+                        userQuantity.Remove(chatId);
+                        userExtras.Remove(chatId);
+                        userFlower.Remove(chatId);
+                        userDate.Remove(chatId);
+                        break;
+                    case "confirm_no":
+                        await botClient.SendTextMessageAsync(chatId, "❌ Заказ отменён.");
+
+                        // Очищаем данные
+                        userState.Remove(chatId);
+                        userQuantity.Remove(chatId);
+                        userExtras.Remove(chatId);
+                        userFlower.Remove(chatId);
+                        userDate.Remove(chatId);
+                        break;
 
                     // Календарь и завершение
                     default:
@@ -267,13 +287,19 @@ if (!string.IsNullOrEmpty(token))
                             string receipt = $"✅ Чек заказа:\n\nПродавец: Youscam\nПокупатель: @{username}\nБукет: {flowerName}\nКоличество: {userQuantity[chatId]}\nДополнительно: {extrasText}\nСумма: {rounded}₽\nДата доставки: {dateSelected:dd.MM.yyyy}";
 
                             await botClient.SendTextMessageAsync(chatId, receipt);
-                            await botClient.SendTextMessageAsync(chatId, "В ближайшее время с вами свяжется.");
 
-                            userState.Remove(chatId);
-                            userQuantity.Remove(chatId);
-                            userExtras.Remove(chatId);
-                            userFlower.Remove(chatId);
-                            userDate.Remove(chatId);
+                            // Кнопки подтверждения
+                            var confirmKeyboard = new InlineKeyboardMarkup(new[]
+                            {
+                                new []
+                             {
+                                      InlineKeyboardButton.WithCallbackData("✅ Да", "confirm_yes"),
+                                  InlineKeyboardButton.WithCallbackData("❌ Нет", "confirm_no")
+                              }
+                                });
+
+                            await botClient.SendTextMessageAsync(chatId, "Подтвердить заказ?", replyMarkup: confirmKeyboard);
+
                         }
                         else if (data.StartsWith("month_"))
                         {
