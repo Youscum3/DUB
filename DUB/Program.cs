@@ -220,20 +220,52 @@ if (!string.IsNullOrEmpty(token))
                     case "order_roses":
                         userFlower[chatId] = "roses";
                         userState[chatId] = "await_quantity";
-                        await botClient.SendTextMessageAsync(chatId, "Введите количество роз:");
+
+                        var quantityKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+        new [] { InlineKeyboardButton.WithCallbackData("15", "qty_15"),
+                InlineKeyboardButton.WithCallbackData("31", "qty_31"),
+                InlineKeyboardButton.WithCallbackData("51", "qty_51") },
+        new [] { InlineKeyboardButton.WithCallbackData("101", "qty_101"),
+                InlineKeyboardButton.WithCallbackData("Другое количество", "qty_custom") }
+    });
+
+                        await botClient.SendTextMessageAsync(chatId, "Выберите количество роз:", replyMarkup: quantityKeyboard);
                         break;
+
 
                     case "order_tulips":
                         userFlower[chatId] = "tulips";
                         userState[chatId] = "await_quantity";
-                        await botClient.SendTextMessageAsync(chatId, "Введите количество тюльпанов:");
+
+                        var quantityKeyboardTulips = new InlineKeyboardMarkup(new[]
+                        {
+        new [] { InlineKeyboardButton.WithCallbackData("15", "qty_15"),
+                InlineKeyboardButton.WithCallbackData("31", "qty_31"),
+                InlineKeyboardButton.WithCallbackData("51", "qty_51") },
+        new [] { InlineKeyboardButton.WithCallbackData("101", "qty_101"),
+                InlineKeyboardButton.WithCallbackData("Другое количество", "qty_custom") }
+    });
+
+                        await botClient.SendTextMessageAsync(chatId, "Выберите количество тюльпанов:", replyMarkup: quantityKeyboardTulips);
                         break;
 
                     case "order_dahlias":
                         userFlower[chatId] = "dahlias";
                         userState[chatId] = "await_quantity";
-                        await botClient.SendTextMessageAsync(chatId, "Введите количество георгин:");
+
+                        var quantityKeyboardDahlias = new InlineKeyboardMarkup(new[]
+                        {
+        new [] { InlineKeyboardButton.WithCallbackData("15", "qty_15"),
+                InlineKeyboardButton.WithCallbackData("31", "qty_31"),
+                InlineKeyboardButton.WithCallbackData("51", "qty_51") },
+        new [] { InlineKeyboardButton.WithCallbackData("101", "qty_101"),
+                InlineKeyboardButton.WithCallbackData("Другое количество", "qty_custom") }
+    });
+
+                        await botClient.SendTextMessageAsync(chatId, "Выберите количество георгин:", replyMarkup: quantityKeyboardDahlias);
                         break;
+
 
                     // Дополнительно
                     case "extra_glitter":
