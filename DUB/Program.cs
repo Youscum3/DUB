@@ -32,56 +32,23 @@ if (!string.IsNullOrEmpty(token))
                 var username = message.From.Username ?? message.From.FirstName;
 
                 // Ввод количества
-                if (userState.ContainsKey(chatId) && userState[chatId] == "await_custom_quantity")
+                    // Ввод количества при стандартном заказе
+                    if (userState.ContainsKey(chatId) && userState[chatId] == "await_quantity")
                 {
                     if (int.TryParse(messageText, out int count))
                     {
-                        decimal pricePerUnit = userFlower[chatId] switch
-                        {
-                            "roses" => 8.6m,
-                            "tulips" => 6.6m,
-                            "dahlias" => 13m,
-                            _ => 0m
-                        };
+                        userQuantity[chatId] = count;
+                        userState[chatId] = "await_extras";
 
-                        int total = (int)Math.Round(count * pricePerUnit, 0, MidpointRounding.AwayFromZero);
-
-                        await botClient.SendTextMessageAsync(chatId, $"💰 Цена за {count} шт.: {total}₽");
-
-                        userState.Remove(chatId); // сбрасываем состояние
+                        // показать клавиатуру с дополнительными элементами
                     }
                     else
                     {
-                        await botClient.SendTextMessageAsync(chatId, "Введите число.");
+                        await botClient.SendTextMessageAsync(chatId, "Пожалуйста, введите число.");
                     }
                     return;
                 }
-                {
-                    if (int.TryParse(messageText, out int count))
-                    {
-                        decimal pricePerUnit = userState[chatId] switch
-                        {
-                            "roses" => 8.6m,
-                            "tulips" => 6.6m,
-                            "dahlias" => 13m,
-                            _ => 0m
-                        };
-
-                        decimal total = count * pricePerUnit;
-                        int rounded = (int)Math.Round(total, 0, MidpointRounding.AwayFromZero);
-
-                        await botClient.SendTextMessageAsync(
-                            chatId,
-                            $"💰 Цена: {rounded}₽\n\nВведите другое количество или выберите меню"
-                        );
-                    }
-                    else
-                    {
-                        await botClient.SendTextMessageAsync(chatId, "Введите число.");
-                    }
-
-                    return;
-                }
+                
                 if (userState.ContainsKey(chatId) && userState[chatId] == "await_quantity")
                 {
                     if (int.TryParse(messageText, out int count))
