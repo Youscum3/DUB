@@ -114,6 +114,10 @@ if (!string.IsNullOrEmpty(token))
 
                 switch (data)
                 {
+                    case "start_menu":
+                        await ShowMainMenu(chatId);
+                        break;
+
                     case "start_price":
                         // 💥 Добавляем сброс состояния прямо здесь
                         userState.Remove(chatId);
@@ -250,25 +254,53 @@ if (!string.IsNullOrEmpty(token))
                         await ShowCalendar(chatId, DateTime.Today.Year, DateTime.Today.Month);
                         break;
                     case "confirm_yes":
-                        await botClient.SendTextMessageAsync(chatId, "✅ Заказ подтверждён!\nВ ближайшее время с вами свяжутся.");
 
-                        // Теперь очищаем данные
+                        var successKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+        new []
+        {
+            InlineKeyboardButton.WithCallbackData("🏠 Меню", "start_menu"),
+            InlineKeyboardButton.WithCallbackData("💬 Контакты", "start_contacts")
+        }
+    });
+
+                        await botClient.SendTextMessageAsync(
+                            chatId,
+                            "✅ Заказ подтверждён!\nВ ближайшее время с вами свяжутся для уточнения деталей.",
+                            replyMarkup: successKeyboard
+                        );
+
                         userState.Remove(chatId);
                         userQuantity.Remove(chatId);
                         userExtras.Remove(chatId);
                         userFlower.Remove(chatId);
                         userDate.Remove(chatId);
+
                         break;
                     case "confirm_no":
-                        await botClient.SendTextMessageAsync(chatId, "❌ Заказ отменён.");
 
-                        // Очищаем данные
+                        var cancelKeyboard = new InlineKeyboardMarkup(new[]
+                        {
+        new []
+        {
+            InlineKeyboardButton.WithCallbackData("🏠 Меню", "start_menu")
+        }
+    });
+
+                        await botClient.SendTextMessageAsync(
+                            chatId,
+                            "❌ Заказ отменён.",
+                            replyMarkup: cancelKeyboard
+                        );
+
                         userState.Remove(chatId);
                         userQuantity.Remove(chatId);
                         userExtras.Remove(chatId);
                         userFlower.Remove(chatId);
                         userDate.Remove(chatId);
+
                         break;
+
 
                     // Календарь и завершение
                     default:
