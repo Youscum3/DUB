@@ -111,27 +111,47 @@ if (!string.IsNullOrEmpty(token))
             else if (update.CallbackQuery is { Data: { } data })
             {
                 var chatId = update.CallbackQuery.Message.Chat.Id;
-                var username = update.CallbackQuery.From.Username ?? update.CallbackQuery.From.FirstName;
 
                 switch (data)
                 {
                     case "start_price":
+                        // 💥 Добавляем сброс состояния прямо здесь
                         userState.Remove(chatId);
+                        userQuantity.Remove(chatId);
+                        userExtras.Remove(chatId);
+                        userFlower.Remove(chatId);
+                        userDate.Remove(chatId);
+
                         await ShowPriceMenu(chatId);
                         break;
 
                     case "start_order":
                         userState.Remove(chatId);
+                        userQuantity.Remove(chatId);
+                        userExtras.Remove(chatId);
+                        userFlower.Remove(chatId);
+                        userDate.Remove(chatId);
+
                         await ShowOrderMenu(chatId);
                         break;
 
                     case "start_contacts":
                         userState.Remove(chatId);
+                        userQuantity.Remove(chatId);
+                        userExtras.Remove(chatId);
+                        userFlower.Remove(chatId);
+                        userDate.Remove(chatId);
+
                         await ShowContacts(chatId);
                         break;
 
                     case "start_delivery":
                         userState.Remove(chatId);
+                        userQuantity.Remove(chatId);
+                        userExtras.Remove(chatId);
+                        userFlower.Remove(chatId);
+                        userDate.Remove(chatId);
+
                         await ShowDeliveryMenu(chatId);
                         break;
 
@@ -214,6 +234,11 @@ if (!string.IsNullOrEmpty(token))
                     default:
                         if (data.StartsWith("date_"))
                         {
+                            // НЕ объявляем chatId заново, используем существующий
+                            // var chatId = update.CallbackQuery.Message.Chat.Id; // <-- убираем
+
+                            var username = update.CallbackQuery.From.Username ?? update.CallbackQuery.From.FirstName;
+
                             var dateSelected = DateTime.ParseExact(data.Substring(5), "yyyy-MM-dd", null);
                             userDate[chatId] = dateSelected;
 
