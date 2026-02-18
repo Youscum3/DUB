@@ -212,10 +212,10 @@ if (!string.IsNullOrEmpty(token))
                     case "confirm_yes":
                         await botClient.SendTextMessageAsync(chatId, "✅ Заказ подтверждён! Мастер скоро напишет.", replyMarkup: GetBackToMenuKeyboard());
 
-                        // Здесь можно использовать adminChatId
+                        // Формируем подробности заказа для админа
                         string extras = userExtras.ContainsKey(chatId) && userExtras[chatId].Count > 0
-                ? string.Join(", ", userExtras[chatId])
-                : "Нет";
+                            ? string.Join(", ", userExtras[chatId])
+                            : "Нет";
                         string date = userDate.ContainsKey(chatId) ? userDate[chatId].ToString("dd.MM.yyyy") : "не выбрана";
                         decimal pricePerUnit = userFlower[chatId] switch
                         {
@@ -233,6 +233,9 @@ if (!string.IsNullOrEmpty(token))
                                            $"Дополнения: {extras}\n" +
                                            $"Дата: {date}\n" +
                                            $"💰 Итого: {totalPrice}₽";
+
+                        // Отправляем админу
+                        await botClient.SendTextMessageAsync(adminChatId, orderInfo);
 
                         ClearUser(chatId);
                         break;
