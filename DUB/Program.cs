@@ -70,6 +70,14 @@ botClient.StartReceiving(
 
             switch (data)
             {
+                // Подтверждение
+                case "confirm_yes":
+                    // код подтверждения
+                    break;
+                case "confirm_no":
+                    // код отмены
+                    break;
+
                 // Пример работы с категориями цены
                 case "price_category_roses_15":
                 case "price_category_tulips_15":
@@ -165,26 +173,7 @@ botClient.StartReceiving(
                     break;
 
                 // Подтверждение
-                case "confirm_yes":
-                    var successKeyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new [] { InlineKeyboardButton.WithCallbackData("🏠 Меню", "start_menu"),
-                                InlineKeyboardButton.WithCallbackData("💬 Контакты", "start_contacts") }
-                    });
-                    await botClient.SendTextMessageAsync(chatId, "✅ Заказ подтверждён!\nВ ближайшее время с вами свяжутся для уточнения деталей.", replyMarkup: successKeyboard);
-
-                    userState.Remove(chatId); userQuantity.Remove(chatId); userExtras.Remove(chatId); userFlower.Remove(chatId); userDate.Remove(chatId);
-                    break;
-
-                case "confirm_no":
-                    var cancelKeyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new [] { InlineKeyboardButton.WithCallbackData("🏠 Меню", "start_menu") }
-                    });
-                    await botClient.SendTextMessageAsync(chatId, "❌ Заказ отменён.", replyMarkup: cancelKeyboard);
-                    userState.Remove(chatId); userQuantity.Remove(chatId); userExtras.Remove(chatId); userFlower.Remove(chatId); userDate.Remove(chatId);
-                    break;
-
+               
                 default:
                     if (data.StartsWith("date_"))
                     {
