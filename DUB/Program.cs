@@ -313,10 +313,10 @@ botClient.StartReceiving(
     });
 
                             await botClient.SendTextMessageAsync(
-                                chatId,
-                                $"Вы выбрали: {quantity} шт.\nВыберите дополнительные элементы:",
-                                replyMarkup: extrasKeyboard
-                            );
+    chatId,
+    $"Вы выбрали: {quantity} шт.\n\n⚠️ ЦЕНА ДОПОЛНИТЕЛЬНЫХ УСЛУГ ОБГОВАРИВАЕТСЯ С МАСТЕРОМ\n\nВыберите дополнительные элементы:",
+    replyMarkup: extrasKeyboard
+);
 
                             break;
                         }
