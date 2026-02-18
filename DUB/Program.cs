@@ -36,17 +36,7 @@ botClient.StartReceiving(
                 var username = message.From.Username ?? message.From.FirstName;
 
                 // Ввод количества
-                // Ввод количества при стандартном заказе
-                int count; // один раз в начале метода
-                if (int.TryParse(messageText, out count))
-                {
-                    userQuantity[chatId] = count;
-                    userState[chatId] = "await_extras";
-                }
-                else
-                {
-                    await botClient.SendTextMessageAsync(chatId, "Пожалуйста, введите число.");
-                }
+               
 
 
                 // Ввод количества
