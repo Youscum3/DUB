@@ -20,6 +20,8 @@ var userFlower = new Dictionary<long, string>();
 var userDate = new Dictionary<long, DateTime>();
 
 TelegramBotClient botClient = null;
+long adminChatId = 1453388711; // сюда поставь свой Telegram ID
+
 if (!string.IsNullOrEmpty(token))
 {
     botClient = new TelegramBotClient(token);
