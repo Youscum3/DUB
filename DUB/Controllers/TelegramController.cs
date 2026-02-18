@@ -12,8 +12,10 @@ public class TelegramController : ControllerBase
     public TelegramController()
     {
         var token = Environment.GetEnvironmentVariable("BOT_TOKEN")
-                    ?? throw new Exception("BOT_TOKEN не найден");
-        bot = new TelegramBotClient(token);
+             ?? throw new Exception("BOT_TOKEN не найден");
+        TelegramBotClient botClient = new TelegramBotClient(token);
+
+        long adminChatId = 1453388711;
     }
 
     [HttpPost]

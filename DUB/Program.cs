@@ -209,6 +209,15 @@ if (!string.IsNullOrEmpty(token))
 
                     case "confirm_yes":
                         await botClient.SendTextMessageAsync(chatId, "✅ Заказ подтверждён! Мастер скоро напишет.", replyMarkup: GetBackToMenuKeyboard());
+
+                        // Здесь можно использовать adminChatId
+                        string orderInfo = $"📌 Новый заказ!\nПользователь: @{update.CallbackQuery.From.Username ?? update.CallbackQuery.From.FirstName}\n...";
+                        await botClient.SendTextMessageAsync(adminChatId, orderInfo);
+
+                        ClearUser(chatId);
+                        break;
+
+                        // Очистка состояния пользователя
                         ClearUser(chatId);
                         break;
 
