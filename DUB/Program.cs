@@ -507,7 +507,7 @@ async Task ShowMainMenu(long chatId)
 
     var mainKeyboard = new InlineKeyboardMarkup(new[]
     {
-    new [] { InlineKeyboardButton.WithCallbackData("🌹 Сделать заказ 🌹", "start_order") },
+    new [] { InlineKeyboardButton.WithCallbackData("🌹 Сделать заказ ", "start_order") },
     new [] { InlineKeyboardButton.WithCallbackData("🚚 Доставка 🚚", "start_delivery") },
     new [] { InlineKeyboardButton.WithCallbackData("☎️ Контакты ☎️", "start_contacts") },
     new [] { InlineKeyboardButton.WithCallbackData("💰 Цена 💰", "start_price") }
