@@ -213,13 +213,27 @@ if (!string.IsNullOrEmpty(token))
                         await botClient.SendTextMessageAsync(chatId, "✅ Заказ подтверждён! Мастер скоро напишет.", replyMarkup: GetBackToMenuKeyboard());
 
                         // Здесь можно использовать adminChatId
-                        string orderInfo = $"📌 Новый заказ!\nПользователь: @{update.CallbackQuery.From.Username ?? update.CallbackQuery.From.FirstName}\n...";
-                        await botClient.SendTextMessageAsync(adminChatId, orderInfo);
+                        string extras = userExtras.ContainsKey(chatId) && userExtras[chatId].Count > 0
+                ? string.Join(", ", userExtras[chatId])
+                : "Нет";
+                        string date = userDate.ContainsKey(chatId) ? userDate[chatId].ToString("dd.MM.yyyy") : "не выбрана";
+                        decimal pricePerUnit = userFlower[chatId] switch
+                        {
+                            "roses" => 8.6m,
+                            "tulips" => 6.6m,
+                            "dahlias" => 13m,
+                            _ => 0m
+                        };
+                        int totalPrice = (int)Math.Round(pricePerUnit * userQuantity[chatId], 0);
 
-                        ClearUser(chatId);
-                        break;
+                        string orderInfo = $"📌 Новый заказ!\n" +
+                                           $"Пользователь: @{update.CallbackQuery.From.Username ?? update.CallbackQuery.From.FirstName}\n" +
+                                           $"Букет: {userFlower[chatId]}\n" +
+                                           $"Количество: {userQuantity[chatId]}\n" +
+                                           $"Дополнения: {extras}\n" +
+                                           $"Дата: {date}\n" +
+                                           $"💰 Итого: {totalPrice}₽";
 
-                        // Очистка состояния пользователя
                         ClearUser(chatId);
                         break;
 
