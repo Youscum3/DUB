@@ -221,10 +221,9 @@ async Task ShowMainMenu(long chatId)
 
     var mainKeyboard = new InlineKeyboardMarkup(new[]
     {
-        new [] { InlineKeyboardButton.WithCallbackData("🌹 Сделать заказ ", "start_order") },
-        new [] { InlineKeyboardButton.WithCallbackData("🚚 Доставка 🚚", "start_delivery") },
-        new [] { InlineKeyboardButton.WithCallbackData("☎️ Контакты ☎️", "start_contacts") },
-        new [] { InlineKeyboardButton.WithCallbackData("💰 Цена 💰", "start_price") }
+new [] { InlineKeyboardButton.WithCallbackData("🌹 Розы 🌹", "order_roses") },
+new [] { InlineKeyboardButton.WithCallbackData("🌷 Тюльпаны 🌷", "order_tulips") },
+new [] { InlineKeyboardButton.WithCallbackData("🌺 Георгины 🌺", "order_dahlias") }
     });
     await botClient.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mainKeyboard);
 }
@@ -235,9 +234,9 @@ async Task ShowPriceMenu(long chatId)
 
     var keyboard = new InlineKeyboardMarkup(new[]
     {
-        new [] { InlineKeyboardButton.WithCallbackData("🌹 Розы 🌹", "category_roses") },
-        new [] { InlineKeyboardButton.WithCallbackData("🌷 Тюльпаны 🌷", "category_tulips") },
-        new [] { InlineKeyboardButton.WithCallbackData("🌺 Георгины 🌺", "category_dahlias") }
+new [] { InlineKeyboardButton.WithCallbackData("🌹 Розы 🌹", "order_roses") },
+new [] { InlineKeyboardButton.WithCallbackData("🌷 Тюльпаны 🌷", "order_tulips") },
+new [] { InlineKeyboardButton.WithCallbackData("🌺 Георгины 🌺", "order_dahlias") }
     });
     await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: keyboard);
 }
