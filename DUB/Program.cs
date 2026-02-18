@@ -179,9 +179,9 @@ if (!string.IsNullOrEmpty(token))
                         userState[chatId] = "await_extras";
                         var exKeyboard = new InlineKeyboardMarkup(new[]
                         {
-                            new [] { InlineKeyboardButton.WithCallbackData("Блёстки", "extra_glitter"), InlineKeyboardButton.WithCallbackData("Картинка", "extra_picture") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Игрушка", "extra_toy"), InlineKeyboardButton.WithCallbackData("Бабочки", "extra_butterfly") },
-                            new [] { InlineKeyboardButton.WithCallbackData("Бантики", "extra_ribbons") },
+                            new [] { InlineKeyboardButton.WithCallbackData("⭐️Блёстки⭐️", "extra_glitter"), InlineKeyboardButton.WithCallbackData("🖼️Картинка🖼️", "extra_picture") },
+                            new [] { InlineKeyboardButton.WithCallbackData("🧸Игрушка🧸", "extra_toy"), InlineKeyboardButton.WithCallbackData("🦋Бабочки🦋", "extra_butterfly") },
+                            new [] { InlineKeyboardButton.WithCallbackData("🎀Бантики🎀", "extra_ribbons") },
                             new [] { InlineKeyboardButton.WithCallbackData("✅ Готово", "extras_done") }
                         });
                         await botClient.SendTextMessageAsync(chatId, $"Вы выбрали: {qty} шт.\n\n⚠️ ЦЕНА ДОП. УСЛУГ ОБГОВАРИВАЕТСЯ С МАСТЕРОМ\n\nВыберите дополнения:", replyMarkup: exKeyboard);
