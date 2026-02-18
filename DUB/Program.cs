@@ -224,7 +224,7 @@ if (!string.IsNullOrEmpty(token))
                             userDate[chatId] = dateSelected;
                             decimal p = userFlower[chatId] switch { "roses" => 8.6m, "tulips" => 6.6m, "dahlias" => 13m, _ => 0m };
                             int total = (int)Math.Round(userQuantity[chatId] * p, 0);
-                            string receipt = $"✅ Чек заказа:\n\nБукет: {userFlower[chatId]}\nКол-во: {userQuantity[chatId]}\nДоп: {(userExtras.ContainsKey(chatId) ? string.Join(", ", userExtras[chatId]) : "Нет")}\nИтого: {total}₽\nДата: {dateSelected:dd.MM.yyyy}";
+                            string receipt = $"✅ Чек заказа:\n\nБукет: {userFlower[chatId]}\n📦 Кол-во: {userQuantity[chatId]}\n✨ Доп: {(userExtras.ContainsKey(chatId) ? string.Join(", ", userExtras[chatId]) : "Нет")}\n💰 Итого: {total}₽\n📅 Дата: {dateSelected:dd.MM.yyyy}";
                             await botClient.SendTextMessageAsync(chatId, receipt);
                             await botClient.SendTextMessageAsync(chatId, "Подтвердить заказ?", replyMarkup: new InlineKeyboardMarkup(new[] {
                                 new [] { InlineKeyboardButton.WithCallbackData("✅ Да", "confirm_yes"), InlineKeyboardButton.WithCallbackData("❌ Нет", "confirm_no") }
@@ -257,10 +257,10 @@ async Task ShowMainMenu(long chatId)
 {
     ClearUser(chatId);
     var mk = new InlineKeyboardMarkup(new[] {
-        new [] { InlineKeyboardButton.WithCallbackData("Цены", "start_price") },
-        new [] { InlineKeyboardButton.WithCallbackData("Доставка", "start_delivery") },
-        new [] { InlineKeyboardButton.WithCallbackData("Контакты", "start_contacts") },
-        new [] { InlineKeyboardButton.WithCallbackData("Сделать заказ", "start_order") }
+       new [] { InlineKeyboardButton.WithCallbackData("💰 Цены", "start_price") },
+new [] { InlineKeyboardButton.WithCallbackData("🚚 Доставка", "start_delivery") },
+new [] { InlineKeyboardButton.WithCallbackData("📞 Контакты", "start_contacts") },
+new [] { InlineKeyboardButton.WithCallbackData("🌸 Сделать заказ", "start_order") }
     });
     await botClient.SendTextMessageAsync(chatId, "Выберите действие:", replyMarkup: mk);
 }
@@ -269,9 +269,9 @@ async Task ShowPriceMenu(long chatId)
 {
     ClearUser(chatId);
     var k = new InlineKeyboardMarkup(new[] {
-        new [] { InlineKeyboardButton.WithCallbackData("Розы", "category_roses") },
-        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "category_tulips") },
-        new [] { InlineKeyboardButton.WithCallbackData("Георгины", "category_dahlias") }
+        new [] { InlineKeyboardButton.WithCallbackData("🌹 Розы 🌹", "category_roses") },
+        new [] { InlineKeyboardButton.WithCallbackData("🌷 Тюльпаны 🌷", "category_tulips") },
+        new [] { InlineKeyboardButton.WithCallbackData("🌺 Георгины 🌺", "category_dahlias") }
     });
     await botClient.SendTextMessageAsync(chatId, "Выберите категорию:", replyMarkup: k);
 }
@@ -279,9 +279,9 @@ async Task ShowPriceMenu(long chatId)
 async Task ShowOrderMenu(long chatId)
 {
     var k = new InlineKeyboardMarkup(new[] {
-        new [] { InlineKeyboardButton.WithCallbackData("Розы", "order_roses") },
-        new [] { InlineKeyboardButton.WithCallbackData("Тюльпаны", "order_tulips") },
-        new [] { InlineKeyboardButton.WithCallbackData("Георгины", "order_dahlias") }
+        new [] { InlineKeyboardButton.WithCallbackData("🌹 Розы 🌹", "order_roses") },
+        new [] { InlineKeyboardButton.WithCallbackData("🌷 Тюльпаны 🌷", "order_tulips") },
+        new [] { InlineKeyboardButton.WithCallbackData("🌺 Георгины 🌺", "order_dahlias") }
     });
     await botClient.SendTextMessageAsync(chatId, "Выберите букет:", replyMarkup: k);
 }
