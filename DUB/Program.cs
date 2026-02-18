@@ -33,10 +33,7 @@ botClient.StartReceiving(
             if (update.Message is { Text: { } messageText } message)
             {
                 var chatId = message.Chat.Id;
-                var username = message.From.Username ?? message.From.FirstName;
-
-                // Ввод количества
-               
+                var username = message.From.Username ?? message.From.FirstName;               
 
 
                 // Ввод количества
@@ -295,6 +292,40 @@ botClient.StartReceiving(
     });
 
                         await botClient.SendTextMessageAsync(chatId, "Выберите количество роз:", replyMarkup: quantityKeyboard);
+                        break;
+                    // ==== КНОПКИ КОЛИЧЕСТВА ====
+                    case "qty_15":
+                    case "qty_31":
+                    case "qty_51":
+                    case "qty_101":
+                        {
+                            int quantity = int.Parse(data.Split('_')[1]);
+
+                            userQuantity[chatId] = quantity;
+                            userState[chatId] = "await_extras";
+
+                            var extrasKeyboard = new InlineKeyboardMarkup(new[]
+                            {
+        new [] { InlineKeyboardButton.WithCallbackData("Блёстки", "extra_glitter"), InlineKeyboardButton.WithCallbackData("Картинка", "extra_picture") },
+        new [] { InlineKeyboardButton.WithCallbackData("Игрушка", "extra_toy"), InlineKeyboardButton.WithCallbackData("Бабочки", "extra_butterfly") },
+        new [] { InlineKeyboardButton.WithCallbackData("Бантики", "extra_ribbons") },
+        new [] { InlineKeyboardButton.WithCallbackData("✅ Готово", "extras_done") }
+    });
+
+                            await botClient.SendTextMessageAsync(
+                                chatId,
+                                $"Вы выбрали: {quantity} шт.\nВыберите дополнительные элементы:",
+                                replyMarkup: extrasKeyboard
+                            );
+
+                            break;
+                        }
+
+
+                    // ==== ДРУГОЕ КОЛИЧЕСТВО ====
+                    case "qty_custom":
+                        userState[chatId] = "await_quantity";
+                        await botClient.SendTextMessageAsync(chatId, "Введите нужное количество:");
                         break;
 
 
